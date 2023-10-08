@@ -70,23 +70,6 @@ kbest = SelectKBest(score_func=f_classif, k=20)
 kbest.fit(df_ex_target_ex_cat, df_target)
 selected_features = list(df_ex_target_ex_cat.columns[kbest.get_support()])'''
 # %% export des dataset nettoyés
-'''
-# Nous laissons les valeurs manquantes et les supprimerons pour les modèles qui ne les gèrent pas.
-train = pd.concat([X_train, y_train], axis=1)
-print("train.shape:", train.shape)
-print(train.isna().sum())
-train.dropna(inplace=True)
-print("train.shape:", train.shape)
-y_train = train.pop('TARGET')
-X_train = train
-
-test = pd.concat([X_test, y_test], axis=1)
-print("test.shape:", train.shape)
-test.dropna(inplace=True)
-print("test.shape:", train.shape)
-y_test = test.pop('TARGET')
-X_test = test
-'''
 X_train.to_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'), index=False)
 y_train.to_csv(os.path.join('Dataset', 'Data clean' , 'y_train.csv'), index=False)
 X_test.to_csv(os.path.join('Dataset', 'Data clean' , 'X_test.csv'), index=False)

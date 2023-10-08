@@ -1,9 +1,4 @@
-# %% imports
-"python.linting.flake8Args": [
-    "--max-line-length=120",
-    "--ignore=E402,F841,F401,E302,E305",
-]
-# %%
+# %% Imports
 import os
 import pandas as pd
 import numpy as np
@@ -82,8 +77,27 @@ def mlflow_log(model, run_name, params, accuracy, auc, f1):
         mlflow.log_metric('auc', auc)
         mlflow.log_metric('f1', f1)
 # %% settings
-pd.options.display.max_rows = 500
-pd.options.display.max_columns = 500
+def set_settings():
+    pd.options.display.max_rows = 500
+    pd.options.display.max_columns = 500
+
+# Créé pour faire du 
+# test unitaire
+set_settings()
+
+def addition(a=0, b=0):
+    '''Retourne la somme de a et b.
+    Fonction uniquement créée pour tester la bonne mise en place de Pytest lors d'un push github.
+    
+    Parameters:
+        - a : int : Première valeur à additionner.
+        - b : int : Deuxième valeur à additionner.
+    
+    Returns:
+        - somme : int : la somme de a et b.
+    '''
+
+    return(a+b)
 
 # %% imports data
 X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'))
