@@ -191,4 +191,31 @@ if __name__ == '__main__':
     if method == "gboost":
         # Modélisation Gradient Boosting Classifier
         run_name = "Run Gradient Boosting Classifier"
+        
+        with mlflow.start_run(run_name=run_name):
+            # Gradient Boosting
+            gbc = GradientBoostingClassifier()
+            
+            params_gbc = {"learning_rate": np.logspace(-2, 0, 4),
+                          "n_estimators": np.linspace(10, 150, 5, dtype=int),
+                          "min_samples_split": np.linspace(5, 50, 4, dtype=int)
+                          }
+
+            halving_rand_gbc = HalvingRandomSearchCV(estimator=gbc,
+                                                     param_distributions=params_gbc,
+                                                     cv=5,
+                                                     scoring='accuracy',
+                                                     error_score=0,
+                                                     n_jobs=-1
+                                                    )
+            halving_rand_gbc.fit(X_train, y_train)
+            
+            # Modélisation, prédictions et performances
+            model = GradientBoostingClassifier(**halving_rand_gbc.best_params_)
+            model.fit(X_train, y_train)
+            predictions = model.predict(X_test)
+            accuracy, auc_, f1 = mlflow_eval_metrics(y_test, predictions)
+            
+            # MLFlow log
+            mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1)
 # %%
