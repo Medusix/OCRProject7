@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV, HalvingRandomSearchCV
@@ -167,13 +167,13 @@ if __name__ == '__main__':
                          }
             
             halving_rand_rfc = HalvingRandomSearchCV(estimator=rfc, 
-                                            #param_grid=params_lr,
-                                            param_distributions=params_rfc,
-                                            cv=5,
-                                            scoring='accuracy',
-                                            error_score=0,
-                                            n_jobs=-1
-                                            )
+                                                    #param_grid=params_lr,
+                                                    param_distributions = params_rfc,
+                                                    cv = 5,
+                                                    scoring = 'accuracy',
+                                                    error_score = 0,
+                                                    n_jobs = -1
+                                                    )
             halving_rand_rfc.fit(X_train, y_train)
             
             # Modélisation, prédictions et performances
@@ -184,6 +184,7 @@ if __name__ == '__main__':
             
             #MLFlow log
             mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc, f1)
-    if method == "XGBoost":
-        pass
+    if method == "gboost":
+        # Modélisation Gradient Boosting Classifier
+        run_name="Run Gradient Boosting Classifier"
 # %%
