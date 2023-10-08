@@ -27,7 +27,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
-        run: echo In GitHub Actions (blank.yml)!
+        run: echo In GitHub Actions blank.yml!
 
       # Checks the python version used
       - name : Display Python version in checkoutv3
