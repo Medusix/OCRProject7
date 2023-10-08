@@ -184,5 +184,6 @@ if __name__ == '__main__':
             
             #MLFlow log
             mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc, f1)
-            
+    if method == "XGBoost":
+        pass
 # %%
