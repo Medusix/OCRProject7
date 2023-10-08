@@ -1,2 +1,2 @@
 08 10: Test de pytest dans Githubactions
-08 10: Test de pytest dans Githubactions. Suppression d'arguments
+08 10: Test de pytest dans Githubactions. Suppression d'arguments (2)
