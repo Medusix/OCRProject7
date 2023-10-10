@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingRandomSearchCV
 
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, roc_curve, auc
 
 import mlflow
 # import mlflow_tools => en attendant de régler le problème.
@@ -18,12 +18,12 @@ import mlflow
 # %% Fonctions copiées/collées ici en attendant de résoudre le problème de dépendance
 def mlflow_eval_metrics(y_true, y_pred):
     '''Calculates classification metrics.
-    
+
     -------------
     Parameters:
     - y_true : 1d array-like, or label indicator array / sparse matrix : Ground truth (correct) labels.
     - y_pred : 1d array-like, or label indicator array / sparse matrix : Predicted labels, as returned by a classifier.
-    
+
     -------------
     Returns:
     - accuracy : float : Fraction of correctly classified samples.
@@ -32,9 +32,13 @@ def mlflow_eval_metrics(y_true, y_pred):
     '''
     accuracy = accuracy_score(y_true, y_pred)
     # auc_ = auc(y_true, y_pred)
-    auc_ = roc_auc_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
-    
+    fpr, tpr, _ = roc_curve(y_true, y_pred)
+    print("fpr:",fpr)
+    print("tpr:",tpr)
+    auc_ = auc(fpr, tpr)
+    # auc_ = roc_auc_score(y_true, y_pred)
+
     return accuracy, auc_, f1
 
 
@@ -59,67 +63,100 @@ def mlflow_log(model, run_name, params, accuracy, auc, f1):
         print(f"\tAccuracy: {round(accuracy,2)}")
         print(f"\tAUC: {round(auc,2)}")
         print(f"\tF1_score: {round(f1,2)}")
-        
+
         mlflow.log_param('max_depth', params['max_depth'])
         mlflow.log_param('min_samples_split', params['min_samples_split'])
         mlflow.log_param('n_estimators', params['n_estimators'])
         mlflow.log_metric('accuracy', accuracy)
         mlflow.log_metric('auc', auc)
         mlflow.log_metric('f1', f1)
-    
+
+        # mlflow.sklearn.save_model(model, "RandomForestClassifier1")
+
     elif isinstance(model, LogisticRegression):
         print(run_name)
         print(f"\tAccuracy: {round(accuracy,2)}")
         print(f"\tAUC: {round(auc,2)}")
         print(f"\tF1_score: {round(f1,2)}")
-        
+
         mlflow.log_param('C', params['C'])
         mlflow.log_metric('accuracy', accuracy)
         mlflow.log_metric('auc', auc)
         mlflow.log_metric('f1', f1)
-        
-        
+
+        # mlflow.sklearn.save_model(model, "LogisticRegression")
+
+    elif isinstance(model, GradientBoostingClassifier):
+        print(run_name)
+        print(f"\tAccuracy: {round(accuracy,2)}")
+        print(f"\tAUC: {round(auc,2)}")
+        print(f"\tF1_score: {round(f1,2)}")
+
+        mlflow.log_param('learning_rate', params['learning_rate'])
+        mlflow.log_param('n_estimators', params['n_estimators'])
+        mlflow.log_param('min_samples_split', params['min_samples_split'])
+        mlflow.log_metric('accuracy', accuracy)
+        mlflow.log_metric('auc', auc)
+        mlflow.log_metric('f1', f1)
+
+        # mlflow.sklearn.save_model(model, "GradientBoostingRegressor")
+
+
 # %% settings
-def set_settings():
-    pd.options.display.max_rows = 500
-    pd.options.display.max_columns = 500
-
-
-# Créé pour faire du 
-# test unitaire
-set_settings()
+pd.options.display.max_rows = 500
+pd.options.display.max_columns = 500
 
 
 def addition(a=0, b=0):
     '''Retourne la somme de a et b.
     Fonction uniquement créée pour tester la bonne mise en place de Pytest lors d'un push github.
-    
+
     Parameters:
         - a : int : Première valeur à additionner.
         - b : int : Deuxième valeur à additionner.
-    
+
     Returns:
         - somme : int : la somme de a et b.
     '''
 
     return (a+b)
 
+# %% Sélection des modèle et datasets
+method = "Gradient Boosting"  # à revoir. Semble s'appeler via le terminal avec des paramètres => method: str = sys.argv[1] if len(sys.argv) > 1 else '
+dataset = "base" # "base "ou "under-sampled" ou "over-sampled"
+run_name = method + " avec dataset " + dataset
+print(run_name)
 
 # %% imports data
-X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'))
-X_test = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_test.csv'))
-y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train.csv'))
-y_test = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_test.csv'))
+# Train set
+if dataset == "base":
+    '''X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'))
+    y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train.csv'))'''
+    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train.parquet'))
+    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train.parquet'))
+elif dataset == "over-sampled":
+    '''X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.csv'))
+    y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.csv'))'''
+    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.parquet'))
+    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.parquet'))
+elif dataset == "under-sampled":
+    '''X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.csv'))
+    y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.csv'))'''
+    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.parquet'))
+    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.parquet'))
+
+# Test set
+'''X_test = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_test.csv'))
+y_test = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_test.csv'))'''
+X_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_test.parquet'))
+y_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'))
 
 # %% Modélisations
-
 if __name__ == '__main__':
     mlflow.set_experiment(experiment_name='credit_score_classification')
-    
-    method = "randomforest"  # à revoir. Semble s'appeler via le terminal avec des paramètres => method: str = sys.argv[1] if len(sys.argv) > 1 else 'manuel'
-    
-    if method == "logreg":
-        # Suppression des valeurs manquantes dans le cadre de la logistic_regression
+
+    if method == "Logistic Regression":
+        # Suppression des valeurs manquantes dans le cadre de la régression logistique
         # Valeurs manquantes train
         train = pd.concat([X_train, y_train], axis=1)
         train.dropna(inplace=True)
@@ -130,16 +167,16 @@ if __name__ == '__main__':
         test.dropna(inplace=True)
         y_test = test.pop('TARGET')
         X_test = test
-        
+
         # Modélisation Logistic Regression
-        run_name = "Run Logistic regression"
-        
+        # run_name = "Run Logistic regression"
+
         with mlflow.start_run(run_name=run_name):
             # HalvingRandomSearchCV
             log_reg = LogisticRegression()
-            
+
             params_lr = {"C": np.logspace(0.1, 2, 4)}
-            
+
             halving_grid_lr = HalvingRandomSearchCV(estimator=log_reg, 
                                                     param_distributions=params_lr,
                                                     cv=5,
@@ -148,7 +185,7 @@ if __name__ == '__main__':
                                                     n_jobs=-1
                                                     )
             halving_grid_lr.fit(X_train, y_train)
-            
+
             # Modélisation, prédictions et performances
             model = LogisticRegression(**halving_grid_lr.best_params_)
             model.fit(X_train, y_train)
@@ -158,19 +195,19 @@ if __name__ == '__main__':
 
             # mlflow_tools.mlflow_log(model, run_name, halving_grid_lr.best_params_, accuracy, auc, f1)
             mlflow_log(model, run_name, halving_grid_lr.best_params_, accuracy, auc_, f1)
-    if method == "randomforest":
+    elif method == "Random Forest":
         # Modélisation Logistic Regression
-        run_name = "Run Random Forest Classifier"
-        
+        # run_name = "Run Random Forest Classifier"
+
         with mlflow.start_run(run_name=run_name):
             # HalvingRandomSearchCV
             rfc = RandomForestClassifier()
-            
+
             params_rfc = {"n_estimators": np.linspace(10, 150, 5, dtype=int),
                           "max_depth": np.linspace(5, 50, 4, dtype=int),
                           "min_samples_split": np.linspace(5, 50, 4, dtype=int)
                          }
-            
+
             halving_rand_rfc = HalvingRandomSearchCV(estimator=rfc, 
                                                      param_distributions=params_rfc,
                                                      cv=5,
@@ -179,23 +216,23 @@ if __name__ == '__main__':
                                                      n_jobs=-1
                                                     )
             halving_rand_rfc.fit(X_train, y_train)
-            
+
             # Modélisation, prédictions et performances
             model = RandomForestClassifier(**halving_rand_rfc.best_params_)
             model.fit(X_train, y_train)
             predictions = model.predict(X_test)
             accuracy, auc_, f1 = mlflow_eval_metrics(y_test, predictions)
-            
+
             # MLFlow log
             mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1)
-    if method == "gboost":
+    elif method == "Gradient Boosting":
         # Modélisation Gradient Boosting Classifier
-        run_name = "Run Gradient Boosting Classifier"
-        
+        # run_name = "Run Gradient Boosting Classifier"
+
         with mlflow.start_run(run_name=run_name):
             # Gradient Boosting
             gbc = GradientBoostingClassifier()
-            
+
             params_gbc = {"learning_rate": np.logspace(-2, 0, 4),
                           "n_estimators": np.linspace(10, 150, 5, dtype=int),
                           "min_samples_split": np.linspace(5, 50, 4, dtype=int)
@@ -209,13 +246,13 @@ if __name__ == '__main__':
                                                      n_jobs=-1
                                                     )
             halving_rand_gbc.fit(X_train, y_train)
-            
+
             # Modélisation, prédictions et performances
             model = GradientBoostingClassifier(**halving_rand_gbc.best_params_)
             model.fit(X_train, y_train)
             predictions = model.predict(X_test)
             accuracy, auc_, f1 = mlflow_eval_metrics(y_test, predictions)
-            
+
             # MLFlow log
             mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1)
 # %%

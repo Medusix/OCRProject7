@@ -69,9 +69,84 @@ df_ex_target_ex_cat = df_ex_target_ex_cat.drop(columns=['TARGET'])
 kbest = SelectKBest(score_func=f_classif, k=20)
 kbest.fit(df_ex_target_ex_cat, df_target)
 selected_features = list(df_ex_target_ex_cat.columns[kbest.get_support()])'''
+
+# %% Gestion du déséquilibre des classes 
+if isinstance(y_train, pd.core.series.Series):
+    y_train = y_train.to_frame()
+
+nb_pos = y_train[y_train['TARGET'] == 1].shape[0]
+nb_neg = y_train[y_train['TARGET'] == 0].shape[0]
+print(f'Proportion de targets négatives: {round(100*nb_neg/(nb_pos+nb_neg),2)}%')
+
+
+# Méthodes pour gérer l'imbalance:
+# 1 - Collecter plus de données => Impossible dans le cadre de ce projet
+# 2 - Utilisation d'une métrique adapté (AUROC) => met en évidence que le modèle prédit la classe principale
+# 3 - Utilisation d'algorithmes différents => Les 3 algorithmes testés (Logistic regression, Random forest et Gradient Boosting) yield les même résultats
+# Nous pourrions utiliser un modèle qui pénalise la mauvaise classification de la classe sous-représentée
+# 4 - Resampling: Over-sampling
+# 5 - Resampling: Under-sampling
+# 6 - Créer des échantillons synthétiques
+
+# Nous allons utiliser des méthodes de resampling pour améliorer la qualité de prédiction du modèle.
+
+# Under-sampling: Nous allons réduire le nombre de target négatives afin d'avoir un équilibre entre les 2 classes
+train = pd.concat([X_train, y_train], axis = 1)
+train_pos = train.query("TARGET == 1")
+train_neg = train.query("TARGET == 0")
+train_neg = train_neg.sample(train_pos.shape[0])
+
+train = pd.concat([train_pos, train_neg], axis=0)
+
+nb_pos = train[train['TARGET'] == 1].shape[0]
+nb_neg = train[train['TARGET'] == 0].shape[0]
+print(f'Proportion de targets négatives (après under-sampling): {round(100*nb_neg/(nb_pos+nb_neg),2)}%')
+
+y_train_undersampled = train.pop('TARGET')
+X_train_undersampled = train
+
+# Over-sampling: Nous allons multiplier le nombre d'individus dont la target est positive
+train = pd.concat([X_train, y_train], axis = 1)
+train_pos = train.query("TARGET == 1")
+train_neg = train.query("TARGET == 0")
+
+list_df = [train_pos for i in range(int(train_neg.shape[0]/train_pos.shape[0]))]
+list_df.append(train_neg)
+train = pd.concat(list_df, axis=0)
+
+nb_pos = train[train['TARGET'] == 1].shape[0]
+nb_neg = train[train['TARGET'] == 0].shape[0]
+print(f'Proportion de targets négatives (après over-sampling): {round(100*nb_neg/(nb_pos+nb_neg),2)}%')
+
+y_train_oversampled = train.pop('TARGET')
+X_train_oversampled = train
+
+
 # %% export des dataset nettoyés
-X_train.to_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'), index=False)
-y_train.to_csv(os.path.join('Dataset', 'Data clean' , 'y_train.csv'), index=False)
-X_test.to_csv(os.path.join('Dataset', 'Data clean' , 'X_test.csv'), index=False)
-y_test.to_csv(os.path.join('Dataset', 'Data clean' , 'y_test.csv'), index=False)
+# datasets originaux
+'''X_train.to_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'), index=False)
+y_train.to_csv(os.path.join('Dataset', 'Data clean', 'y_train.csv'), index=False)
+X_test.to_csv(os.path.join('Dataset', 'Data clean', 'X_test.csv'), index=False)
+y_test.to_csv(os.path.join('Dataset', 'Data clean', 'y_test.csv'), index=False)'''
+X_train.to_parquet(os.path.join('Dataset', 'Data clean', 'X_train.parquet'), index=False)
+y_train.to_parquet(os.path.join('Dataset', 'Data clean', 'y_train.parquet'), index=False)
+X_test.to_parquet(os.path.join('Dataset', 'Data clean', 'X_test.parquet'), index=False)
+y_test=y_test.to_frame()
+y_test.to_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'), index=False)
+
+# datasets under_sampled
+'''X_train_undersampled.to_csv(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.csv'), index=False)
+y_train_undersampled.to_csv(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.csv'), index=False)'''
+X_train_undersampled.to_parquet(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.parquet'), index=False)
+y_train_undersampled = y_train_undersampled.to_frame()
+y_train_undersampled.to_parquet(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.parquet'), index=False)
+
+# datasets over_sampled
+'''X_train_oversampled.to_csv(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.csv'), index=False)
+y_train_oversampled.to_csv(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.csv'), index=False)'''
+X_train_oversampled.to_parquet(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.parquet'), index=False)
+y_train_oversampled = y_train_oversampled.to_frame()
+y_train_oversampled.to_parquet(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.parquet'), index=False)
+
+
 # %%
