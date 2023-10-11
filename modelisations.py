@@ -9,49 +9,52 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingRandomSearchCV
 
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, roc_curve, auc
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, roc_curve, auc, confusion_matrix
 
 import mlflow
 # import mlflow_tools => en attendant de régler le problème.
 
 
 # %% Fonctions copiées/collées ici en attendant de résoudre le problème de dépendance
-def mlflow_eval_metrics(y_true, y_pred):
+def mlflow_eval_metrics(y_true, y_pred, fn_to_fp = 10):
     '''Calculates classification metrics.
 
     -------------
     Parameters:
     - y_true : 1d array-like, or label indicator array / sparse matrix : Ground truth (correct) labels.
     - y_pred : 1d array-like, or label indicator array / sparse matrix : Predicted labels, as returned by a classifier.
-
+    - fn_to_fp : int : Pondération du coût d'un Faux négatif par rapport à un faux positif. Utilisé pour calculer le coût métier.
+    
     -------------
     Returns:
     - accuracy : float : Fraction of correctly classified samples.
     - auc : float : Area Under the Curve.
     - f1 : float : F1 score of the positive class in binary classification.
+    - cout_metier : 
     '''
     accuracy = accuracy_score(y_true, y_pred)
-    # auc_ = auc(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
     fpr, tpr, _ = roc_curve(y_true, y_pred)
-    print("fpr:",fpr)
-    print("tpr:",tpr)
     auc_ = auc(fpr, tpr)
-    # auc_ = roc_auc_score(y_true, y_pred)
+    # Calcul d'un coût métier pondérant un Faux négatif à 10 fois un Faux positif.
+    # Coût métier = (Nombre de faux négatifs x pondération + Nombre de faux positifs x 1) / nombre de prédictions 
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    cout_metier = (fn * fn_to_fp + fp * 1)/y_pred.shape[0]
 
-    return accuracy, auc_, f1
+    return accuracy, auc_, f1, cout_metier
 
 
-def mlflow_log(model, run_name, params, accuracy, auc, f1):
+def mlflow_log(model, run_name, params, accuracy, auc, f1, cout_metier):
     '''Logs a run via MLFlow.
 
     -------------
     Parameters:
     - model : sklearn model : Instance of a sklearn model among:
                                 - sklearn.ensemble.RandomForestClassifier
+                                - skleanr.ensemble.GradientBoostingClassifier
                                 - sklearn.linear_model.LogisticRegression
     - run_name : str : Name of the MLFlow run.
-    - params: tuple : Tuple of params as expressed by the cross_validation hyper parameter optimizer .best_params_.
+    - params: dictionnaire : Dictionary of params as expressed by the cross_validation hyper parameter optimizer .best_params_.
                         - RandomForestClassifier: ('max_depth', 'min_samples_split', 'n_estimators')
                         - LogisticRegression: ('penalyt', 'C')
     - accuracy : float : Fraction of correctly classified samples.
@@ -63,13 +66,11 @@ def mlflow_log(model, run_name, params, accuracy, auc, f1):
         print(f"\tAccuracy: {round(accuracy,2)}")
         print(f"\tAUC: {round(auc,2)}")
         print(f"\tF1_score: {round(f1,2)}")
+        print(f"\tCoût métier: {round(cout_metier,2)}")
 
         mlflow.log_param('max_depth', params['max_depth'])
         mlflow.log_param('min_samples_split', params['min_samples_split'])
         mlflow.log_param('n_estimators', params['n_estimators'])
-        mlflow.log_metric('accuracy', accuracy)
-        mlflow.log_metric('auc', auc)
-        mlflow.log_metric('f1', f1)
 
         # mlflow.sklearn.save_model(model, "RandomForestClassifier1")
 
@@ -78,11 +79,9 @@ def mlflow_log(model, run_name, params, accuracy, auc, f1):
         print(f"\tAccuracy: {round(accuracy,2)}")
         print(f"\tAUC: {round(auc,2)}")
         print(f"\tF1_score: {round(f1,2)}")
+        print(f"\tCoût métier: {round(cout_metier,2)}")
 
         mlflow.log_param('C', params['C'])
-        mlflow.log_metric('accuracy', accuracy)
-        mlflow.log_metric('auc', auc)
-        mlflow.log_metric('f1', f1)
 
         # mlflow.sklearn.save_model(model, "LogisticRegression")
 
@@ -91,16 +90,19 @@ def mlflow_log(model, run_name, params, accuracy, auc, f1):
         print(f"\tAccuracy: {round(accuracy,2)}")
         print(f"\tAUC: {round(auc,2)}")
         print(f"\tF1_score: {round(f1,2)}")
+        print(f"\tCoût métier: {round(cout_metier,2)}")
 
         mlflow.log_param('learning_rate', params['learning_rate'])
         mlflow.log_param('n_estimators', params['n_estimators'])
         mlflow.log_param('min_samples_split', params['min_samples_split'])
-        mlflow.log_metric('accuracy', accuracy)
-        mlflow.log_metric('auc', auc)
-        mlflow.log_metric('f1', f1)
 
         # mlflow.sklearn.save_model(model, "GradientBoostingRegressor")
-
+        
+    mlflow.log_metric('accuracy', accuracy)
+    mlflow.log_metric('auc', auc)
+    mlflow.log_metric('f1', f1)
+    mlflow.log_metric('coût_métier', cout_metier)
+    
 
 # %% settings
 pd.options.display.max_rows = 500
@@ -122,32 +124,24 @@ def addition(a=0, b=0):
     return (a+b)
 
 # %% Sélection des modèle et datasets
-method = "Gradient Boosting"  # à revoir. Semble s'appeler via le terminal avec des paramètres => method: str = sys.argv[1] if len(sys.argv) > 1 else '
-dataset = "base" # "base "ou "under-sampled" ou "over-sampled"
+method = "Logistic Regression"  # à revoir. Semble s'appeler via le terminal avec des paramètres => method: str = sys.argv[1] if len(sys.argv) > 1 else '
+dataset = "under-sampled" # "base "ou "under-sampled" ou "over-sampled"
 run_name = method + " avec dataset " + dataset
 print(run_name)
 
 # %% imports data
 # Train set
 if dataset == "base":
-    '''X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train.csv'))
-    y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train.csv'))'''
     X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train.parquet'))
     y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train.parquet'))
 elif dataset == "over-sampled":
-    '''X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.csv'))
-    y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.csv'))'''
     X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.parquet'))
     y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.parquet'))
 elif dataset == "under-sampled":
-    '''X_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.csv'))
-    y_train = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.csv'))'''
     X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.parquet'))
     y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.parquet'))
 
 # Test set
-'''X_test = pd.read_csv(os.path.join('Dataset', 'Data clean', 'X_test.csv'))
-y_test = pd.read_csv(os.path.join('Dataset', 'Data clean', 'y_test.csv'))'''
 X_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_test.parquet'))
 y_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'))
 
@@ -191,10 +185,10 @@ if __name__ == '__main__':
             model.fit(X_train, y_train)
             predictions = model.predict(X_test)
             # accuracy, auc, f1 = mlflow_tools.mlflow_eval_metrics(y_test, predictions)
-            accuracy, auc_, f1 = mlflow_eval_metrics(y_test, predictions)
+            accuracy, auc_, f1, cout_metier = mlflow_eval_metrics(y_test, predictions)
 
             # mlflow_tools.mlflow_log(model, run_name, halving_grid_lr.best_params_, accuracy, auc, f1)
-            mlflow_log(model, run_name, halving_grid_lr.best_params_, accuracy, auc_, f1)
+            mlflow_log(model, run_name, halving_grid_lr.best_params_, accuracy, auc_, f1, cout_metier)
     elif method == "Random Forest":
         # Modélisation Logistic Regression
         # run_name = "Run Random Forest Classifier"
@@ -221,10 +215,10 @@ if __name__ == '__main__':
             model = RandomForestClassifier(**halving_rand_rfc.best_params_)
             model.fit(X_train, y_train)
             predictions = model.predict(X_test)
-            accuracy, auc_, f1 = mlflow_eval_metrics(y_test, predictions)
+            accuracy, auc_, f1, cout_metier = mlflow_eval_metrics(y_test, predictions)
 
             # MLFlow log
-            mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1)
+            mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1, cout_metier)
     elif method == "Gradient Boosting":
         # Modélisation Gradient Boosting Classifier
         # run_name = "Run Gradient Boosting Classifier"
@@ -251,8 +245,8 @@ if __name__ == '__main__':
             model = GradientBoostingClassifier(**halving_rand_gbc.best_params_)
             model.fit(X_train, y_train)
             predictions = model.predict(X_test)
-            accuracy, auc_, f1 = mlflow_eval_metrics(y_test, predictions)
+            accuracy, auc_, f1, cout_metier = mlflow_eval_metrics(y_test, predictions)
 
             # MLFlow log
-            mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1)
+            mlflow_log(model, run_name, halving_rand_rfc.best_params_, accuracy, auc_, f1, cout_metier)
 # %%
