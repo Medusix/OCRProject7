@@ -38,6 +38,7 @@ jobs:
           pip install pandas
           pip install scikit-learn
           pip install mlflow
+          pip install shap
           pytest tests_unitaires.py --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
           echo test with pytest realised
         continue-on-error: true
