@@ -93,7 +93,7 @@ def mlflow_log_experiment(model, run_name, params, accuracy, auc_, f1, cout_meti
         # mlflow.sklearn.save_model(model, "GradientBoostingRegressor")
 
     mlflow.log_metric('accuracy', accuracy)
-    mlflow.log_metric('auc', auc)
+    mlflow.log_metric('auc', auc_)
     mlflow.log_metric('f1', f1)
     mlflow.log_metric('coût_métier', cout_metier)
 

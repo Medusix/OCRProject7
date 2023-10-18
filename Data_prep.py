@@ -15,11 +15,11 @@ from sklearn.feature_selection import f_classif
 warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.display.max_rows = 500
 pd.options.display.max_columns = 500
-FEATURE_SELECTION = True
-STRATEGY_RESAMPLING = "oversampled"
+FEATURE_SELECTION = None  # None or integer
+STRATEGY_RESAMPLING = "original"  # oversampled, undersampled, original, SMOTE
 
 
-# %%
+# %% Définitions de fonctions
 @contextmanager
 def timer(title):
     t0 = time.time()
@@ -247,7 +247,7 @@ def credit_card_balance(num_rows=None):
     return cc_agg
 
 
-def data_preparation(debug=False):
+def data_preparation(main_dataset_only=True, debug=False):
     '''Process datasets into actionnable train and test sets.
     '''
     num_rows = 10000 if debug else None
@@ -257,48 +257,52 @@ def data_preparation(debug=False):
     # Question: Train_test_pslit avant, mais du coup besoin de séparer les ID des différentes bases, d'encoder sur les ID de train
     # ou on ne s'embête pas et on fait à la fin
     # X_train, X_test, y_train, y_test = train_test_split(data, y_train, test_size=.25, random_state=10)
-
-    with timer("Process bureau and bureau_balance"):
-        bureau = bureau_and_balance(num_rows)
-        print("Bureau df shape:", bureau.shape)
-        # df = df.join(bureau, how='left', on='SK_ID_CURR')
-        data = data.join(bureau, how='left', on='SK_ID_CURR')
-        del bureau
-        gc.collect()
-    with timer("Process previous_applications"):
-        prev = previous_applications(num_rows)
-        print("Previous applications df shape:", prev.shape)
-        # df = df.join(prev, how='left', on='SK_ID_CURR')
-        data = data.join(prev, how='left', on='SK_ID_CURR')
-        del prev
-        gc.collect()
-    with timer("Process POS-CASH balance"):
-        pos = pos_cash(num_rows)
-        print("Pos-cash balance df shape:", pos.shape)
-        # df = df.join(pos, how='left', on='SK_ID_CURR')
-        data = data.join(pos, how='left', on='SK_ID_CURR')
-        del pos
-        gc.collect()
-    with timer("Process installments payments"):
-        ins = installments_payments(num_rows)
-        print("Installments payments df shape:", ins.shape)
-        # df = df.join(ins, how='left', on='SK_ID_CURR')
-        data = data.join(ins, how='left', on='SK_ID_CURR')
-        del ins
-        gc.collect()
-    with timer("Process credit card balance"):
-        cc = credit_card_balance(num_rows)
-        print("Credit card balance df shape:", cc.shape)
-        # df = df.join(cc, how='left', on='SK_ID_CURR')
-        data = data.join(cc, how='left', on='SK_ID_CURR')
-        del cc
-        gc.collect()
+    if not main_dataset_only:
+        with timer("Process bureau and bureau_balance"):
+            bureau = bureau_and_balance(num_rows)
+            print("Bureau df shape:", bureau.shape)
+            # df = df.join(bureau, how='left', on='SK_ID_CURR')
+            data = data.join(bureau, how='left', on='SK_ID_CURR')
+            del bureau
+            gc.collect()
+        with timer("Process previous_applications"):
+            prev = previous_applications(num_rows)
+            print("Previous applications df shape:", prev.shape)
+            # df = df.join(prev, how='left', on='SK_ID_CURR')
+            data = data.join(prev, how='left', on='SK_ID_CURR')
+            del prev
+            gc.collect()
+        with timer("Process POS-CASH balance"):
+            pos = pos_cash(num_rows)
+            print("Pos-cash balance df shape:", pos.shape)
+            # df = df.join(pos, how='left', on='SK_ID_CURR')
+            data = data.join(pos, how='left', on='SK_ID_CURR')
+            del pos
+            gc.collect()
+        with timer("Process installments payments"):
+            ins = installments_payments(num_rows)
+            print("Installments payments df shape:", ins.shape)
+            # df = df.join(ins, how='left', on='SK_ID_CURR')
+            data = data.join(ins, how='left', on='SK_ID_CURR')
+            del ins
+            gc.collect()
+        with timer("Process credit card balance"):
+            cc = credit_card_balance(num_rows)
+            print("Credit card balance df shape:", cc.shape)
+            # df = df.join(cc, how='left', on='SK_ID_CURR')
+            data = data.join(cc, how='left', on='SK_ID_CURR')
+            del cc
+            gc.collect()
 
     x_train_, x_test_, y_train_, y_test_ = train_test_split(data, y_train_, test_size=.25, random_state=10)
+    print("X_train.shape:", x_train_.shape)
+    print("X_test.shape:", x_test_.shape)
+    print("y_train.shape:", y_train_.shape)
+    print("y_test.shape:", y_test_.shape)
     return x_train_, x_test_, y_train_, y_test_
 
 
-# %% Over and under sampling
+# Over and under sampling
 def resampling(X, y, strategy="undersampled"):
     '''Applies a resampling strategy to X and y.
 
@@ -317,22 +321,48 @@ def resampling(X, y, strategy="undersampled"):
         - X_train_resampled : DataFrame : X_train after application of a resampling strategy.
         - y_train_resampled : DataFrame : y_train after application of a resampling strategy.
     '''
+    print("y:", y)
     if isinstance(y, np.ndarray):
+        print("is nd.array")
         y = pd.Series(y)
+        y = pd.DataFrame(y)
+    if isinstance(y, pd.core.series.Series):
+        print("is pd.Series")
+        y = y.to_frame()
     if strategy == "undersampled":
-        train = pd.concat([X, y], axis=1)
+        # X.reset_index(inplace=True)
+        print("type(y):",type(y))
+        # y.reset_index(inplace=True)
+        print("a",X.shape)
+        print("y.shape:", y.shape)
+        print(y.head())
+        y["SK_ID_CURR"] = y.index
+        # train = pd.concat([X, y], axis=1)
+        # X.join(y, on='SK_ID_CURR')
+        train = X.set_index('SK_ID_CURR').join(y.set_index("SK_ID_CURR"))
+
+        print("b", train.shape)
+        print(train.head(2))
         train_pos = train.query("TARGET == 1")
         train_neg = train.query("TARGET == 0")
-        train_neg = train_neg.sample(train_pos.shape[0])
-
+        train_neg = train_neg.sample(train_pos.shape[0]).copy()
+        print("undersampling 0. NA on X:", X.isna().sum().sum())
+        print("undersampling 0. NA on train:", train.isna().sum().sum())
+        print("undersampling 1.1:", train_pos.shape)
+        print("undersampling 1.2:", train_neg.shape)
         train = pd.concat([train_pos, train_neg], axis=0)
+        print("undersampling 2:", train.shape)
+        print("undersampling 3:", train.isna().sum().sum())
 
         nb_pos = train[train['TARGET'] == 1].shape[0]
         nb_neg = train[train['TARGET'] == 0].shape[0]
         print(f'Proportion de targets négatives (après under-sampling): {round(100*nb_neg/(nb_pos+nb_neg),2)}%')
 
+        print("undersampling 4.0:", train.shape)
+        print("undersampling 4.1:", train['TARGET'].isna().sum())
+
         y_train_resampled = train.pop('TARGET')
-        x_train_resampled = train
+        x_train_resampled = train.reset_index(names=['SK_ID_CURR'])
 
     elif strategy == "oversampled":
         # Over-sampling: Nous allons multiplier le nombre d'individus dont la target est positive
@@ -352,23 +382,23 @@ def resampling(X, y, strategy="undersampled"):
         x_train_resampled = train
     elif strategy == "SMOTE":
         pass
-    else:
+    elif strategy == "original":
         y_train_resampled = y
         x_train_resampled = X
 
     return x_train_resampled, y_train_resampled
 
 
-# %% export des dataset nettoyés
-def export_datasets(X_train_, X_test_, y_train_, y_test_, strategy_resampling):
+# Export des dataset nettoyés
+def export_datasets(X_train_, x_test_, y_train_, y_test_, strategy_resampling):
     '''Exporte les données préparées X_train, X_test, y_train, y_test
 
     ------------
     Inputs:
-        - X_train : DataFrame : X_train
-        - X_test : DataFrame : X_test
-        - y_train : DataFrame : y_train
-        - y_test : DataSeriese : y_test
+        - X_train : pandas.DataFrame : X_train
+        - X_test : pandas.DataFrame : X_test
+        - y_train : pandas.DataFrame ou Series: y_train
+        - y_test : pandas.DataFrame ou Series : y_test
     '''
     if strategy_resampling == "original":
         # datasets non resampled
@@ -376,14 +406,14 @@ def export_datasets(X_train_, X_test_, y_train_, y_test_, strategy_resampling):
     else:
         file_name = f"_{strategy_resampling}"
 
-        X_train_.to_parquet(os.path.join('Dataset', 'Data clean', f'X_train{file_name}.parquet'), index=False)
-        if isinstance(y_train_, pd.Series):
-            y_train_ = y_train_.to_frame()
-        y_train_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_train{file_name}.parquet'), index=False)
-        X_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'X_test{file_name}.parquet'), index=False)
-        if isinstance(y_test_, pd.Series):
-            y_test_ = y_test_.to_frame()
-        y_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_test{file_name}.parquet'), index=False)
+    X_train_.to_parquet(os.path.join('Dataset', 'Data clean', f'X_train{file_name}.parquet'), index=False)
+    if isinstance(y_train_, pd.Series):
+        y_train_ = y_train_.to_frame()
+    y_train_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_train{file_name}.parquet'), index=False)
+    x_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'X_test{file_name}.parquet'), index=False)
+    if isinstance(y_test_, pd.Series):
+        y_test_ = y_test_.to_frame()
+    y_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_test{file_name}.parquet'), index=False)
 
 
 # %%
@@ -391,16 +421,21 @@ if __name__ == "__main__":
     # Récupération des données des différentes bases, séparées en train et test sets.
     X_train, X_test, y_train, y_test = data_preparation()
     features = list(X_train.columns)
+    print("Data prep -  X_test.shape:", X_test.shape)
 
     # Imputation de valeurs manquantes
     imputer = SimpleImputer(strategy="most_frequent")
     X_train = imputer.fit_transform(X_train)
     X_train = pd.DataFrame(X_train, columns=features)
+    print("X_test.shape", X_test.shape)
     X_test = imputer.transform(X_test)
+    print("X_test.shape", X_test.shape)
     X_test = pd.DataFrame(X_test, columns=features)
 
+    print("Imputation -  X_test.shape:", X_test.shape)
+
     # Features selection manuelle
-    features_to_remove = [
+    '''features_to_remove = [
         "INSTAL_PAYMENT_PERC_MAX",
         "INSTAL_PAYMENT_PERC_MEAN",
         "INSTAL_PAYMENT_PERC_SUM",
@@ -410,11 +445,11 @@ if __name__ == "__main__":
         "REFUSED_APP_CREDIT_PERC_MAX"
     ]
     X_train = X_train.drop(columns=features_to_remove)
-    X_test = X_test.drop(columns=features_to_remove)
+    X_test = X_test.drop(columns=features_to_remove)'''
 
     # Features selection kbest
-    if FEATURE_SELECTION:
-        kbest = SelectKBest(score_func=f_classif, k=20)
+    if FEATURE_SELECTION is not None:
+        kbest = SelectKBest(score_func=f_classif, k=FEATURE_SELECTION)
         kbest.fit(X_train, y_train)
 
         # print("Feature selection", kbest.get_support())
@@ -426,15 +461,14 @@ if __name__ == "__main__":
         X_test = X_test[selected_features]
 
     # Over/Under-sampling
-
     X_train, y_train = resampling(X_train, y_train, STRATEGY_RESAMPLING)
-
+    print("Exit X_train.shape:", X_train.shape)
+    print("Exit y_train.shape:", y_train.shape)
+    print("Exit X_test.shape:", X_test.shape)
+    print("Exit NA sur X_train:", X_train.isna().sum().sum())
     if isinstance(y_test, pd.core.series.Series):
         y_test = y_test.to_frame()
     if isinstance(y_train, pd.core.series.Series):
         y_train = y_train.to_frame()
     export_datasets(X_train, X_test, y_train, y_test, STRATEGY_RESAMPLING)
-
-# %%
-# export_datasets(X_train, X_test, y_train, y_test, "base")
 # %%
