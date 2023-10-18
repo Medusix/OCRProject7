@@ -351,8 +351,6 @@ def resampling(X, y, strategy="undersampled"):
         print("undersampling 1.1:", train_pos.shape)
         print("undersampling 1.2:", train_neg.shape)
         train = pd.concat([train_pos, train_neg], axis=0)
-        print("undersampling 2:", train.shape)
-        print("undersampling 3:", train.isna().sum().sum())
 
         nb_pos = train[train['TARGET'] == 1].shape[0]
         nb_neg = train[train['TARGET'] == 0].shape[0]
@@ -360,6 +358,7 @@ def resampling(X, y, strategy="undersampled"):
 
         print("undersampling 4.0:", train.shape)
         print("undersampling 4.1:", train['TARGET'].isna().sum())
+        print("undersampling 5:", train.head(1))
 
         y_train_resampled = train.pop('TARGET')
         x_train_resampled = train.reset_index(names=['SK_ID_CURR'])
@@ -410,10 +409,10 @@ def export_datasets(X_train_, x_test_, y_train_, y_test_, strategy_resampling):
     if isinstance(y_train_, pd.Series):
         y_train_ = y_train_.to_frame()
     y_train_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_train{file_name}.parquet'), index=False)
-    x_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'X_test{file_name}.parquet'), index=False)
+    x_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'X_test.parquet'), index=False)
     if isinstance(y_test_, pd.Series):
         y_test_ = y_test_.to_frame()
-    y_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_test{file_name}.parquet'), index=False)
+    y_test_.to_parquet(os.path.join('Dataset', 'Data clean', f'y_test.parquet'), index=False)
 
 
 # %%
@@ -466,6 +465,9 @@ if __name__ == "__main__":
     print("Exit y_train.shape:", y_train.shape)
     print("Exit X_test.shape:", X_test.shape)
     print("Exit NA sur X_train:", X_train.isna().sum().sum())
+    # X_train.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
+    print("Exit X_train.head(1):", X_train.head(1))
+    print("Exit y_train.head():", y_train.head())
     if isinstance(y_test, pd.core.series.Series):
         y_test = y_test.to_frame()
     if isinstance(y_train, pd.core.series.Series):

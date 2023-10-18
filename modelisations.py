@@ -24,7 +24,7 @@ pd.options.display.max_rows = 500
 pd.options.display.max_columns = 500
 
 # Sélection des modèle et datasets
-METHOD = "Random Forest"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
+METHOD = "Logistic Regression"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
 DATASET = "undersampled"  # "original "ou "undersampled" ou "oversampled"
 RUN_NAME = METHOD + " avec dataset " + DATASET
 FEATURE_IMPORTANCE = True
@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
             # Modélisation, prédictions et performances
             model = LogisticRegression(**halving_grid_lr.best_params_)
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train.values.ravel())
             predictions = model.predict(X_test)
             # accuracy, auc, f1 = mlflow_tools.mlflow_eval_metrics(y_test, predictions)
             accuracy, auc_, f1, cout_metier = mlflow_eval_metrics(y_test, predictions)
@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
             # Modélisation, prédictions et performances
             model = RandomForestClassifier(**halving_rand_rfc.best_params_)
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train.values.ravel())
             predictions = model.predict(X_test)
             accuracy, auc_, f1, cout_metier = mlflow_eval_metrics(y_test, predictions)
 
@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
             # Modélisation, prédictions et performances
             model = GradientBoostingClassifier(**halving_rand_gbc.best_params_)
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train.values.ravel())
             predictions = model.predict(X_test)
             accuracy, auc_, f1, cout_metier = mlflow_eval_metrics(y_test, predictions)
 
@@ -224,7 +224,7 @@ if __name__ == '__main__':
             explainer = shap.Explainer(model, X_train)
             shap_values = explainer(X_train)
 
-            shap.plots.beeswarm(shap_values)
+            shap.plots.beeswarm(shap_values, features=features)
         elif METHOD in ("Random Forest", "Gradient Boosting"):
             explainer = shap.TreeExplainer(model)
             explainer.expected_value = explainer.expected_value[0]
