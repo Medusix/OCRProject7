@@ -24,6 +24,9 @@ def get_user_data(id):
         - else return a string indicating an error raised.
     '''
     X_test = pd.read_parquet(os.path.join("Dataset", "X_test.parquet"))
+
+    print("Bonjour :)")
+
     try:
         if id in X_test['SK_ID_CURR']:
             return X_test.query('SK_ID_CURR == @id')
