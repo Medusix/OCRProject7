@@ -39,6 +39,7 @@ jobs:
           pip install scikit-learn
           pip install mlflow
           pip install shap
+          pip install imblearn
           pytest tests_unitaires.py --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
           echo test with pytest realised
         continue-on-error: true

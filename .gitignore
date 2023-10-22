@@ -4,7 +4,6 @@ Archives/
 Artifacts/
 Evidently/
 mlruns/
-.github
 .ipynb_checkpoints
 .pytest_cache
 
