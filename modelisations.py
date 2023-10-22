@@ -13,8 +13,8 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 import shap
 
-import data_prep
-from data_prep import data_preparation
+import Data_prep
+from Data_prep import data_preparation
 from evidently.test_suite import TestSuite
 from evidently.test_preset import DataStabilityTestPreset, DataQualityTestPreset
 
@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
     # Data Drift analysis
     if RUN_EVIDENTLY:
-        x1, x2, _, _ = data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
+        x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
         new_data = pd.concat([x1, x2], axis=0)
 
         data_stability = TestSuite(tests=[DataStabilityTestPreset()])
