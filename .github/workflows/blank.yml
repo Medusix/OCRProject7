@@ -41,6 +41,7 @@ jobs:
           pip install shap
           pip install imblearn
           pip install evidently
+          pip install ipython
           pytest tests_unitaires.py --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
           echo test with pytest realised
         continue-on-error: true
