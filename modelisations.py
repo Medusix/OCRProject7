@@ -5,18 +5,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
+from pickle import dump
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.metrics import make_scorer
+from sklearn.metrics import confusion_matrix
 
 import shap
 
 import Data_prep
-from Data_prep import data_preparation
-from evidently.test_suite import TestSuite
-from evidently.test_preset import DataStabilityTestPreset, DataQualityTestPreset
+from evidently.report import Report
+from evidently.metric_preset import DataDriftPreset
 
 import mlflow
 from mlflow.models import infer_signature
@@ -31,12 +33,21 @@ pd.options.display.max_columns = 500
 METHOD = "Gradient Boosting"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
 DATASET = "undersampled"  # "original "ou "undersampled" ou "SMOTE"
 RUN_NAME = METHOD + "_" + DATASET
-FEATURE_IMPORTANCE = True
-LOG_MLFLOW = False
-RUN_EVIDENTLY = True
+FEATURE_IMPORTANCE = False
+LOG_MLFLOW = True
+RUN_EVIDENTLY = False
 
 
 # %% Functions
+def cout_metier(y_true, y_pred, fn_to_fp=10):
+    '''Fonction de calcul de coût métier, utilisé pour optimiser la recherche RandomSearch.
+        Optimisation en surpondérant par un facteur fn_to_fp le poids d'un Faux Négatif par rapport à un Faux positif. 
+    '''
+    _, fp, fn, _ = confusion_matrix(y_true, y_pred).ravel()
+    cout = (fn * fn_to_fp + fp * 1)/y_pred.shape[0]
+    return cout
+
+
 def addition(a=0, b=0):
     '''Retourne la somme de a et b.
     Fonction uniquement créée pour tester la bonne mise en place de Pytest lors d'un push github.
@@ -52,45 +63,42 @@ def addition(a=0, b=0):
     return a+b
 
 
-# %% imports data
-# Train set
-if DATASET == "original":
-    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train.parquet'))
-    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train.parquet'))
-elif DATASET == "oversampled":
-    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.parquet'))
-    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.parquet'))
-elif DATASET == "undersampled":
-    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.parquet'))
-    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.parquet'))
-elif DATASET == "SMOTE":
-    X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_SMOTE.parquet'))
-    y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_SMOTE.parquet'))
-
-X_train.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
-y_train.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
-
-# Test set
-X_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_test.parquet'))
-y_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'))
-
-X_test.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
-y_test.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
-
-print("X_train.shape:", X_train.shape)
-print("y_train.shape:", y_train.shape)
-print("X_test.shape:", X_test.shape)
-print("y_test.shape:", y_test.shape)
-
-# %% Centrage et réduction des données
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-
 # %% Modélisations
 if __name__ == '__main__':
     mlflow.set_experiment(experiment_name='credit_score_classification')
+
+    # Data preparartion - Train set
+    if DATASET == "original":
+        X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train.parquet'))
+        y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train.parquet'))
+    elif DATASET == "oversampled":
+        X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_oversampled.parquet'))
+        y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_oversampled.parquet'))
+    elif DATASET == "undersampled":
+        X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_undersampled.parquet'))
+        y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_undersampled.parquet'))
+    elif DATASET == "SMOTE":
+        X_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_train_SMOTE.parquet'))
+        y_train = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_train_SMOTE.parquet'))
+
+    X_train.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
+    y_train.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
+
+    # Data preparartion - Test set
+    X_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'X_test.parquet'))
+    y_test = pd.read_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'))
+
+    X_test.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
+    y_test.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
+
+    # Data scaling and scaler parameters save
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    dump(scaler, open('scaler.pkl', 'wb'))
+
+    # Scorer for 
+    custom_scorer = make_scorer(cout_metier, greater_is_better=False)
 
     if METHOD == "Logistic Regression":
         with mlflow.start_run(run_name=RUN_NAME):
@@ -102,7 +110,7 @@ if __name__ == '__main__':
             halving_grid_lr = HalvingRandomSearchCV(estimator=log_reg,
                                                     param_distributions=params_lr,
                                                     cv=5,
-                                                    scoring='accuracy',
+                                                    scoring=custom_scorer,
                                                     error_score=0,
                                                     n_jobs=-1
                                                     )
@@ -142,7 +150,7 @@ if __name__ == '__main__':
                 estimator=rfc,
                 param_distributions=params_rfc,
                 cv=5,
-                scoring='accuracy',
+                scoring=custom_scorer,
                 error_score=0,
                 n_jobs=-1
             )
@@ -179,7 +187,7 @@ if __name__ == '__main__':
                 estimator=gbc,
                 param_distributions=params_gbc,
                 cv=5,
-                scoring='accuracy',
+                scoring=custom_scorer,
                 error_score=0,
                 n_jobs=-1
                 )
@@ -234,12 +242,15 @@ if __name__ == '__main__':
     if RUN_EVIDENTLY:
         x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
         new_data = pd.concat([x1, x2], axis=0)
+        new_data.set_index(keys=['SK_ID_CURR'], drop=True, inplace=True)
 
-        data_stability = TestSuite(tests=[DataStabilityTestPreset()])
-        data_stability.run(current_data=new_data, reference_data=X_train)
-        data_stability.save_html("data_drift_evidently_102023.html")
+        common_cols = list(set(new_data.columns).intersection(X_train.columns))
+        new_data = new_data[common_cols]
+        X_train = X_train[common_cols]
 
+        data_drift_report = Report(metrics=[DataDriftPreset(),])
+        data_drift_report.run(current_data=new_data, reference_data=X_train, column_mapping=None)
 
-# %%
-print(predictions.sum())
+        data_drift_report.save_html("data_drift.html")
+
 # %%

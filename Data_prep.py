@@ -8,7 +8,6 @@ import time
 import warnings
 
 # Data manipulation
-from collections import Counter
 import numpy as np
 import pandas as pd
 
@@ -17,6 +16,7 @@ from imblearn.over_sampling import SMOTE
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectKBest, f_classif
+from pickle import dump
 
 # %% Settings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -473,6 +473,7 @@ if __name__ == "__main__":
     X_test = imputer.transform(X_test)
     print("X_test.shape", X_test.shape)
     X_test = pd.DataFrame(X_test, columns=features)
+    dump(imputer, open('imputer.pkl', 'wb'))
 
     print("Imputation -  X_test.shape:", X_test.shape)
 
