@@ -2,6 +2,7 @@
 import pandas as pd
 
 from pickle import load
+from pydantic import BaseModel
 
 from fastapi import FastAPI
 
@@ -10,6 +11,14 @@ import mlflow.sklearn
 import Data_prep
 
 app = FastAPI()
+
+
+class Score(BaseModel):
+    '''Objet de retour de l'API comprenant différentes informations.
+    '''
+    client: int
+    pass_fail: str
+    score: float
 
 
 # %% Definitions
@@ -48,7 +57,8 @@ def get_user_data_scaled(id):
             x_new_scaled = pd.DataFrame(x_new_scaled, columns=x_train.drop(columns='SK_ID_CURR').columns)
 
             return x_new_scaled
-        return "SK_ID_CURR non présent en base"
+        else:
+            raise ValueError(f"id SK_ID_CURR {id} non reconnu")
     except ValueError as ve:
         return f'ValueError while collecting data. {ve}'
 
@@ -71,12 +81,22 @@ async def scoring(SK_ID_CURR: int):
     '''
     print('In /scoring/')
     user_data_scaled = get_user_data_scaled(SK_ID_CURR)
+    prediction_proba = model.predict_proba(user_data_scaled)
     prediction = model.predict(user_data_scaled)
     if prediction < .5:
-        result = 'Pass'
+        pass_fail = 'pass'
     else:
-        result = 'Fail'
-    return {"Score": result}
+        pass_fail = "fail"
+    print(prediction)
+    return {"Client_ID": SK_ID_CURR,
+            "Probabilité": round(max(prediction_proba[0]), 4),
+            "Pass": pass_fail}
+
+    '''user_score = Score({"client": SK_ID_CURR,
+                        "pass_fail": pass_fail,
+                        "score": prediction
+                        })
+    return user_score'''
 
 
 # %%

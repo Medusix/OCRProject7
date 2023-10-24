@@ -317,10 +317,10 @@ def data_preparation(main_dataset_only=True, debug=False, new_data=False):
             gc.collect()
 
     x_train_, x_test_, y_train_, y_test_ = train_test_split(data, y_train_, test_size=.25, random_state=10)
-    print("X_train.shape:", x_train_.shape)
-    print("X_test.shape:", x_test_.shape)
-    print("y_train.shape:", y_train_.shape)
-    print("y_test.shape:", y_test_.shape)
+    # print("X_train.shape:", x_train_.shape)
+    # print("X_test.shape:", x_test_.shape)
+    # print("y_train.shape:", y_train_.shape)
+    # print("y_test.shape:", y_test_.shape)
 
     return x_train_, x_test_, y_train_, y_test_
 
@@ -351,16 +351,8 @@ def resampling(x, y, strategy="undersampled"):
         print("is pd.Series")
         y = y.to_frame()
     if strategy == "undersampled":
-        # print("Resampling: X.shape:", x.shape)
-        # print("Resampling: y.shape:", y.shape)
         train = x.set_index('SK_ID_CURR').join(y.set_index("SK_ID_CURR"))
-        # print("Resampling: train.shape:", train.shape)
 
-        # print('resampling.undersampled X.isna().sum().sum():', x.isna().sum().sum())
-        # print('resampling.undersampled y.isna().sum().sum():', y.isna().sum().sum())
-        # print('resampling.undersampled train.isna().sum().sum():', train.isna().sum().sum())
-        # print("train[['AMT_INCOME_TOTAL','TARGET']].isna().sum():", train[['AMT_INCOME_TOTAL', 'TARGET']].isna().sum())
-        # print("Target uniques:", train['TARGET'].nunique(dropna=False))
         train_pos = train.query("TARGET == 1")
         train_neg = train.query("TARGET == 0")
         train_neg = train_neg.sample(train_pos.shape[0]).copy()
@@ -374,16 +366,12 @@ def resampling(x, y, strategy="undersampled"):
         x_train_resampled = train.reset_index(names=['SK_ID_CURR'])
         print("In undersampling, x_train_resampled.columns:", x_train_resampled.columns)
         print("In undersampling, y_train_resampled.head:", y_train_resampled.head())
-        # print('resampling.undersampled train.isna().sum().sum():', train.isna().sum().sum())
 
     elif strategy == "oversampled":
-        # Over-sampling: Nous allons multiplier le nombre d'individus dont la target est positive
-        # y["SK_ID_CURR"] = y.index
         train = x.set_index('SK_ID_CURR').join(y.set_index("SK_ID_CURR"))
         print("oversample - x.shape:", x.shape)
         print("oversample - y.shape:", y.shape)
         print("oversample - train.shape:", train.shape)
-        # train = pd.concat([x, y], axis=1)
         print('resampling.oversampled X.isna().sum().sum():', x.isna().sum().sum())
         print('resampling.oversampled y.isna().sum().sum():', y.isna().sum().sum())
         print('resampling.oversampled train.isna().sum().sum():', train.isna().sum().sum())
@@ -405,17 +393,15 @@ def resampling(x, y, strategy="undersampled"):
         print("In resampling.oversampled, NA sur x_train_resampled:", x_train_resampled.isna().sum().sum())
 
     elif strategy == "SMOTE":
-        # assumption is that data is ordered similarly in both X and y
-        # train = x.set_index('SK_ID_CURR').join(y.set_index("SK_ID_CURR"))
         print("In SMOTE, x.columns:", x.columns)
         smote = SMOTE(sampling_strategy=.7)
         y.drop(columns=['SK_ID_CURR'], inplace=True)
         x_train_resampled, y_train_resampled = smote.fit_resample(x, y)
         y_train_resampled = y_train_resampled.pop("TARGET")
-        
+
         print("In undersampling, x_train_resampled.columns:", x_train_resampled.columns)
         print("In undersampling, y_train_resampled.head:", y_train_resampled.head())
-        
+
     elif strategy == "original":
         y_train_resampled = y
         x_train_resampled = x
@@ -460,10 +446,10 @@ if __name__ == "__main__":
     # Récupération des données des différentes bases, séparées en train et test sets.
     X_train, X_test, y_train, y_test = data_preparation()
     features = list(X_train.columns)
-    print("Data prep -  X_train.shape:", X_train.shape)
-    print("Data prep -  X_test.shape:", X_test.shape)
-    print("Data prep -  y_train.shape:", y_train.shape)
-    print("Data prep -  y_test.shape:", y_test.shape)
+    # print("Data prep -  X_train.shape:", X_train.shape)
+    # print("Data prep -  X_test.shape:", X_test.shape)
+    # print("Data prep -  y_train.shape:", y_train.shape)
+    # print("Data prep -  y_test.shape:", y_test.shape)
 
     # Imputation de valeurs manquantes
     imputer = SimpleImputer(strategy="most_frequent")
