@@ -1,7 +1,9 @@
 # Data
-Dataset/
 Archives/
 Artifacts/
+AWS Mlflow/
+Dataset/
+ec2-13-49-44-23.eu-north-1.compute.amazonaws.com/
 Evidently/
 mlruns/
 .ipynb_checkpoints

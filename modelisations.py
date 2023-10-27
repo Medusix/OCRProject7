@@ -30,6 +30,8 @@ shap.initjs()
 pd.options.display.max_rows = 500
 pd.options.display.max_columns = 500
 
+mlflow.set_tracking_uri('ec2-13-49-44-23.eu-north-1.compute.amazonaws.com')
+
 METHOD = "Gradient Boosting"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
 DATASET = "undersampled"  # "original "ou "undersampled" ou "SMOTE"
 RUN_NAME = METHOD + "_" + DATASET

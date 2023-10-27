@@ -64,7 +64,9 @@ def get_user_data_scaled(id):
 
 
 # %% Instanciation du modèle
-model = mlflow.sklearn.load_model("models:/Credit_Score/Production")
+# model = mlflow.sklearn.load_model("models:/Credit_Score/Production")
+# model = mlflow.sklearn.load_model("http://ec2-13-49-44-23.eu-north-1.compute.amazonaws.com:5000/#/models:/Credit_Score/Production")
+model = mlflow.sklearn.load_model("s3://mlflow-creditscore-bucket/1/Production")
 
 
 # %%  API
