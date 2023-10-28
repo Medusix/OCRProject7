@@ -11,6 +11,7 @@ import mlflow.sklearn
 import Data_prep
 
 app = FastAPI()
+MLFLOW_SERVING = "Local"  # "Local" or "EC2" or "S3"
 
 
 class Score(BaseModel):
@@ -64,9 +65,12 @@ def get_user_data_scaled(id):
 
 
 # %% Instanciation du modèle
-# model = mlflow.sklearn.load_model("models:/Credit_Score/Production")
-# model = mlflow.sklearn.load_model("http://ec2-13-49-44-23.eu-north-1.compute.amazonaws.com:5000/#/models:/Credit_Score/Production")
-model = mlflow.sklearn.load_model("s3://mlflow-creditscore-bucket/1/Production")
+if MLFLOW_SERVING == "Local":
+    model = mlflow.sklearn.load_model("models:/Credit_Score/Production")
+if MLFLOW_SERVING == "EC2":
+    model = mlflow.sklearn.load_model("http://ec2-13-49-44-23.eu-north-1.compute.amazonaws.com:5000/#/models:/Credit_Score/Production")
+if MLFLOW_SERVING == "S3":
+    model = mlflow.sklearn.load_model("s3://mlflow-creditscore-bucket/1/Production")
 
 
 # %%  API
