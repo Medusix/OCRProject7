@@ -407,12 +407,24 @@ def resampling(x, y, strategy="undersampled"):
         x_train_resampled, y_train_resampled = smote.fit_resample(x, y)
         y_train_resampled = y_train_resampled.pop("TARGET")
 
-
     elif strategy == "original":
         y_train_resampled = y
         x_train_resampled = x
         print("In resampling.original, x_train_resampled.shape:", x_train_resampled.shape)
     return x_train_resampled, y_train_resampled
+
+
+def save_columns_to_file(filepath, list_cols):
+    '''Exports a list of elements to a file.
+
+    -----------
+    Parameters:
+        - filepath : str : Path to the file to save.
+        - list_cols : list : List of elements to save.
+    '''
+    with open(filepath, 'w') as fp:
+        for col in list_cols:
+            fp.write("%s\n" % col)
 
 
 # Export des dataset nettoyés
@@ -440,7 +452,8 @@ def export_datasets(x_train_, x_test_, y_train_, y_test_, strategy_resampling):
     if isinstance(y_test_, pd.Series):
         y_test_ = y_test_.to_frame()
     y_test_.to_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'), index=False)
-
+    # REPRENDRE ICI cols = x_train_.columns.to_list()
+    save_columns_to_file('cols.txt', x_train_.columns.to_list())
 
 # %%
 if __name__ == "__main__":

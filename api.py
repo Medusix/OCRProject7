@@ -23,6 +23,25 @@ class Score(BaseModel):
 
 
 # %% Definitions
+
+def read_file_to_list(filepath):
+    '''Reads a file and return a list of its items.
+    
+    --------------
+    Parameters:
+        - filepath : str : Path to the file to read.
+    Returns:
+        - list_lue : list : List of elements read from the file.
+    '''
+    list_lue = []
+    with open(filepath, 'r') as fp:
+        for line in fp:
+            x = line[:-1]
+            list_lue.append(x)
+
+    return list_lue
+
+
 def get_user_data_scaled(id):
     '''Returns data related to an user, as formated in X_test.parquet file.
 
@@ -57,20 +76,26 @@ def get_user_data_scaled(id):
             print('In get_user_data_scaled/5')
 
             # suppression des nouvelles features
-            x_train, _, _, _ = Data_prep.data_preparation()
+            cols = read_file_to_list('cols.txt')
+            x_train = pd.DataFrame(columns=cols)
+            # x_train, _, _, _ = Data_prep.data_preparation()
             user_data, _ = user_data.align(x_train, join="right", axis=1)
+            # user_data = user_data[user_data.columns.intersection(cols)]
             print('In get_user_data_scaled/4')
 
             user_data = imputer.transform(user_data)
-            user_data = pd.DataFrame(user_data, columns=x_train.columns)
+            # user_data = pd.DataFrame(user_data, columns=x_train.columns)
+            user_data = pd.DataFrame(user_data, columns=cols)
             print('In get_user_data_scaled/5')
 
             # Scaling des données pour le modèle
             scaler = load(open('scaler.pkl', 'rb'))
             print('In get_user_data_scaled/6')
             x_new_scaled = scaler.transform(user_data.drop(columns='SK_ID_CURR'))
-            x_new_scaled = pd.DataFrame(x_new_scaled, columns=x_train.drop(columns='SK_ID_CURR').columns)
-            
+            # x_new_scaled = pd.DataFrame(x_new_scaled, columns=x_train.drop(columns='SK_ID_CURR').columns)
+            cols.remove('SK_ID_CURR')
+            x_new_scaled = pd.DataFrame(x_new_scaled, columns=cols)
+
             print('In get_user_data_scaled/7')
             return x_new_scaled
         else:
