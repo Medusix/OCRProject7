@@ -34,33 +34,43 @@ def get_user_data_scaled(id):
         - 0 if the user is not found.
         - else return a string indicating an error raised.
     '''
-
+    print('In get_user_data_scaled/1')
     x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
     new_data = pd.concat([x1, x2], axis=0)
     new_data.set_index(keys=['SK_ID_CURR'], drop=False, inplace=True)
+    print('In get_user_data_scaled/2')
     try:
         if id in new_data.index:
+            print('In get_user_data_scaled/3')
             # Récupération des données du client
             user_data = new_data.query('SK_ID_CURR == @id')
+            print('In get_user_data_scaled/4')
 
             imputer = load(open('imputer.pkl', 'rb'))
+            print('In get_user_data_scaled/5')
 
             # suppression des nouvelles features
             x_train, _, _, _ = Data_prep.data_preparation()
             user_data, _ = user_data.align(x_train, join="right", axis=1)
+            print('In get_user_data_scaled/4')
 
             user_data = imputer.transform(user_data)
             user_data = pd.DataFrame(user_data, columns=x_train.columns)
+            print('In get_user_data_scaled/5')
 
             # Scaling des données pour le modèle
             scaler = load(open('scaler.pkl', 'rb'))
+            print('In get_user_data_scaled/6')
             x_new_scaled = scaler.transform(user_data.drop(columns='SK_ID_CURR'))
             x_new_scaled = pd.DataFrame(x_new_scaled, columns=x_train.drop(columns='SK_ID_CURR').columns)
-
+            
+            print('In get_user_data_scaled/7')
             return x_new_scaled
         else:
             raise ValueError(f"id SK_ID_CURR {id} non reconnu")
+            print('In get_user_data_scaled/8')
     except ValueError as ve:
+        print('In get_user_data_scaled/9')
         return f'ValueError while collecting data. {ve}'
 
 
