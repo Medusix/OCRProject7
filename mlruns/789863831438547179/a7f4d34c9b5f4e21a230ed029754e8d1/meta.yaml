@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/a7f4d34c9b5f4e21a230ed029754e8d1/artifacts
+end_time: 1696947876435
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: a7f4d34c9b5f4e21a230ed029754e8d1
+run_name: Logistic Regression avec dataset over-sampled
+run_uuid: a7f4d34c9b5f4e21a230ed029754e8d1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696947873449
+status: 3
+tags: []
+user_id: amcuc

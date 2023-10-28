@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/18a76987b2754926805985f58c0dbcba/artifacts
+end_time: 1696852531921
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 18a76987b2754926805985f58c0dbcba
+run_name: Run Random Forest Classifier
+run_uuid: 18a76987b2754926805985f58c0dbcba
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696852506241
+status: 4
+tags: []
+user_id: amcuc

@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/94a7b4d2df33467781dcb8a553de7c10/artifacts
+end_time: 1696946197858
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 94a7b4d2df33467781dcb8a553de7c10
+run_name: Logistic Regression avec dataset base
+run_uuid: 94a7b4d2df33467781dcb8a553de7c10
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696946196469
+status: 3
+tags: []
+user_id: amcuc

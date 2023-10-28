@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/c8fd9174eb7a4408bf67ef2a6d6dca72/artifacts
+end_time: 1697699876560
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: c8fd9174eb7a4408bf67ef2a6d6dca72
+run_name: Logistic Regression avec dataset SMOTE
+run_uuid: c8fd9174eb7a4408bf67ef2a6d6dca72
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697699776605
+status: 3
+tags: []
+user_id: amcuc

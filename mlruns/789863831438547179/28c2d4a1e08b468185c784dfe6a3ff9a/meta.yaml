@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/28c2d4a1e08b468185c784dfe6a3ff9a/artifacts
+end_time: 1697706656451
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 28c2d4a1e08b468185c784dfe6a3ff9a
+run_name: Random Forest_SMOTE
+run_uuid: 28c2d4a1e08b468185c784dfe6a3ff9a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697705979423
+status: 3
+tags: []
+user_id: amcuc

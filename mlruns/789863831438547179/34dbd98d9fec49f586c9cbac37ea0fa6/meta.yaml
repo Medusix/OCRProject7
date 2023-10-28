@@ -1,0 +1,16 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/34dbd98d9fec49f586c9cbac37ea0fa6/artifacts
+deleted_time: 1697961080559
+end_time: 1697783449629
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: deleted
+run_id: 34dbd98d9fec49f586c9cbac37ea0fa6
+run_name: Gradient Boosting_undersampled
+run_uuid: 34dbd98d9fec49f586c9cbac37ea0fa6
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697783323560
+status: 3
+tags: []
+user_id: amcuc

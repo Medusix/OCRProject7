@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/2428c1a2ec134be6982ffcad4be6ef1c/artifacts
+end_time: 1697485871108
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 2428c1a2ec134be6982ffcad4be6ef1c
+run_name: Random Forest avec dataset undersampled
+run_uuid: 2428c1a2ec134be6982ffcad4be6ef1c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697485839730
+status: 4
+tags: []
+user_id: amcuc

@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/6606fc36c6a544c9a0d98da720336c95/artifacts
+end_time: 1697657256547
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 6606fc36c6a544c9a0d98da720336c95
+run_name: Gradient Boosting avec dataset undersampled
+run_uuid: 6606fc36c6a544c9a0d98da720336c95
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697657165446
+status: 3
+tags: []
+user_id: amcuc

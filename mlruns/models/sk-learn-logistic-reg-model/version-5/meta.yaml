@@ -1,0 +1,13 @@
+aliases: []
+creation_timestamp: 1697196666626
+current_stage: None
+description: null
+last_updated_timestamp: 1697196666626
+name: sk-learn-logistic-reg-model
+run_id: d6e016684dd546cdad30dc744b1e206b
+run_link: null
+source: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/d6e016684dd546cdad30dc744b1e206b/artifacts/Artifacts
+status: READY
+status_message: null
+user_id: null
+version: 5

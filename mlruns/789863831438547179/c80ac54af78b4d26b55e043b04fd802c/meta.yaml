@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/c80ac54af78b4d26b55e043b04fd802c/artifacts
+end_time: 1697614809088
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: c80ac54af78b4d26b55e043b04fd802c
+run_name: Logistic Regression avec dataset undersampled
+run_uuid: c80ac54af78b4d26b55e043b04fd802c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697614795931
+status: 3
+tags: []
+user_id: amcuc

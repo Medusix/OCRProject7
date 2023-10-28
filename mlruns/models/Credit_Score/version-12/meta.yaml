@@ -1,0 +1,13 @@
+aliases: []
+creation_timestamp: 1697456132245
+current_stage: None
+description: null
+last_updated_timestamp: 1697456132245
+name: Credit_Score
+run_id: f2a152429f924f058e74d75ff4dc4e76
+run_link: null
+source: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/f2a152429f924f058e74d75ff4dc4e76/artifacts/Artifacts
+status: READY
+status_message: null
+user_id: null
+version: 12

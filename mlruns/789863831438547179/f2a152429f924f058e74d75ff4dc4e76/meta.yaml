@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/f2a152429f924f058e74d75ff4dc4e76/artifacts
+end_time: 1697456132276
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: f2a152429f924f058e74d75ff4dc4e76
+run_name: Random Forest avec dataset original
+run_uuid: f2a152429f924f058e74d75ff4dc4e76
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697456065240
+status: 3
+tags: []
+user_id: amcuc

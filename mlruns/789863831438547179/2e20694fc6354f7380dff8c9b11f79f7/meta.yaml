@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/2e20694fc6354f7380dff8c9b11f79f7/artifacts
+end_time: 1696703930653
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 2e20694fc6354f7380dff8c9b11f79f7
+run_name: Run Logistic regression
+run_uuid: 2e20694fc6354f7380dff8c9b11f79f7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696703924969
+status: 4
+tags: []
+user_id: amcuc

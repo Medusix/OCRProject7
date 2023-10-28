@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/amcuc/OCR%20projects/Project%207/mlruns/789863831438547179/03490f82d8e7463c922ff4202ad72abb/artifacts
+end_time: 1697721999114
+entry_point_name: ''
+experiment_id: '789863831438547179'
+lifecycle_stage: active
+run_id: 03490f82d8e7463c922ff4202ad72abb
+run_name: Gradient Boosting_SMOTE
+run_uuid: 03490f82d8e7463c922ff4202ad72abb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1697719506614
+status: 3
+tags: []
+user_id: amcuc
