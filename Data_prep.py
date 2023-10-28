@@ -52,21 +52,22 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     '''Import principal dataset 'application_train.csv and applies first cleaning operations
     '''
     if application_test_data:
-        print('In get_applciation_data/1a')
+        print('In get_application_data/1a')
         df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows)
+        print('In get_application_data/1b')
     else:
-        print('In get_applciation_data/1b')
+        print('In get_application_data/1c')
         df = pd.read_csv(os.path.join("Dataset", "application_train.csv"), nrows=num_rows)
     df = df[df['CODE_GENDER'] != 'XNA']
 
-    print('In get_applciation_data/2')
+    print('In get_application_data/2')
     # Categorical features with Binary encode (0 or 1; two categories)
     for bin_feature in ['CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY']:
         df[bin_feature], _ = pd.factorize(df[bin_feature])
     # Categorical features with One-Hot encode
     df, _ = one_hot_encoder(df, nan_as_category)
 
-    print('In get_applciation_data/3')
+    print('In get_application_data/3')
     # NaN values for DAYS_EMPLOYED: 365.243 -> nan
     df['DAYS_EMPLOYED'].replace(365243, np.nan, inplace=True)
     # Some simple new features (percentages)
@@ -75,9 +76,9 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS']
     df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL']
     df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT']
-    print('In get_applciation_data/4')
+    print('In get_application_data/4')
     gc.collect()
-    print('In get_applciation_data/5')
+    print('In get_application_data/5')
     return df
 
 
