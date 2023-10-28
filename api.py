@@ -85,14 +85,18 @@ async def hello():
 async def scoring(SK_ID_CURR: int):
     '''Prédit le score d'un client sur la base de son id SK_ID_CURR
     '''
-    print('In /scoring/')
+    print('In /scoring/1')
     user_data_scaled = get_user_data_scaled(SK_ID_CURR)
+    print('In /scoring/2')
     prediction_proba = model.predict_proba(user_data_scaled)
+    print('In /scoring/3')
     prediction = model.predict(user_data_scaled)
+    print('In /scoring/4')
     if prediction < .5:
         pass_fail = 'pass'
     else:
         pass_fail = "fail"
+    print('In /scoring/5')
     print(prediction)
     return {"Client_ID": SK_ID_CURR,
             "Probabilité": round(max(prediction_proba[0]), 4),
