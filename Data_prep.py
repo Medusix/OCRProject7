@@ -271,14 +271,18 @@ def data_preparation(main_dataset_only=True, debug=False, new_data=False):
     '''Process datasets into actionnable train and test sets.
     '''
     num_rows = 10000 if debug else None
+    print('In Data_prep.data_preparation/1')
 
     data = get_application_data(num_rows, application_test_data=new_data)
     if new_data:
+        print('In Data_prep.data_preparation/2')
         y_train_ = pd.DataFrame(np.zeros((data.shape[0], 2)), columns=['SK_ID_CURR', 'TARGET'])
+        print('In Data_prep.data_preparation/3')
     else:
         y_train_ = data[['SK_ID_CURR', 'TARGET']].copy()
         data.drop(columns=['TARGET'], inplace=True)
-
+    
+    print('In Data_prep.data_preparation/3')
     if not main_dataset_only:
         with timer("Process bureau and bureau_balance"):
             bureau = bureau_and_balance(num_rows)
@@ -316,11 +320,8 @@ def data_preparation(main_dataset_only=True, debug=False, new_data=False):
             del cc
             gc.collect()
 
+    print('In Data_prep.data_preparation/4')
     x_train_, x_test_, y_train_, y_test_ = train_test_split(data, y_train_, test_size=.25, random_state=10)
-    # print("X_train.shape:", x_train_.shape)
-    # print("X_test.shape:", x_test_.shape)
-    # print("y_train.shape:", y_train_.shape)
-    # print("y_test.shape:", y_test_.shape)
 
     return x_train_, x_test_, y_train_, y_test_
 

@@ -36,6 +36,7 @@ def get_user_data_scaled(id):
     '''
     print('In get_user_data_scaled/1')
     x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
+    print('In get_user_data_scaled/1.2')
     new_data = pd.concat([x1, x2], axis=0)
     new_data.set_index(keys=['SK_ID_CURR'], drop=False, inplace=True)
     print('In get_user_data_scaled/2')
