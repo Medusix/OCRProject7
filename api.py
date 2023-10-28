@@ -37,7 +37,13 @@ def get_user_data_scaled(id):
     print('In get_user_data_scaled/1')
     x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
     print('In get_user_data_scaled/1.2')
+    # print('x1.head(2):')
+    # print(x1.head(2))
+    # print('x2.head(2):')
+    # print(x2.head(2))
     new_data = pd.concat([x1, x2], axis=0)
+    # print("new_data.head():")
+    # print(new_data.head())
     new_data.set_index(keys=['SK_ID_CURR'], drop=False, inplace=True)
     print('In get_user_data_scaled/2')
     try:
@@ -68,8 +74,8 @@ def get_user_data_scaled(id):
             print('In get_user_data_scaled/7')
             return x_new_scaled
         else:
-            raise ValueError(f"id SK_ID_CURR {id} non reconnu")
             print('In get_user_data_scaled/8')
+            raise ValueError(f"id SK_ID_CURR {id} non reconnu")
     except ValueError as ve:
         print('In get_user_data_scaled/9')
         return f'ValueError while collecting data. {ve}'
@@ -89,7 +95,7 @@ if MLFLOW_SERVING == "S3":
 async def hello():
     '''Fonction d'accueil
     '''
-    return {"Chargement": "Modèle"}
+    return {"Statut modèle": "Chargé"}
 
 
 @app.get("/scoring/{SK_ID_CURR}")

@@ -53,13 +53,15 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     '''
     if application_test_data:
         print('In get_application_data/1a')
-        df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows, quoting=3, on_bad_lines='skip')
+        df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=10, sep=",")
+        # df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows)
         print('In get_application_data/1b')
     else:
         print('In get_application_data/1c')
         df = pd.read_csv(os.path.join("Dataset", "application_train.csv"), nrows=num_rows)
     df = df[df['CODE_GENDER'] != 'XNA']
-
+    print("df.head(2)")
+    print(df.head(2))
     print('In get_application_data/2')
     # Categorical features with Binary encode (0 or 1; two categories)
     for bin_feature in ['CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY']:
@@ -372,8 +374,6 @@ def resampling(x, y, strategy="undersampled"):
 
         y_train_resampled = train.pop('TARGET')
         x_train_resampled = train.reset_index(names=['SK_ID_CURR'])
-        print("In undersampling, x_train_resampled.columns:", x_train_resampled.columns)
-        print("In undersampling, y_train_resampled.head:", y_train_resampled.head())
 
     elif strategy == "oversampled":
         train = x.set_index('SK_ID_CURR').join(y.set_index("SK_ID_CURR"))
@@ -407,8 +407,6 @@ def resampling(x, y, strategy="undersampled"):
         x_train_resampled, y_train_resampled = smote.fit_resample(x, y)
         y_train_resampled = y_train_resampled.pop("TARGET")
 
-        print("In undersampling, x_train_resampled.columns:", x_train_resampled.columns)
-        print("In undersampling, y_train_resampled.head:", y_train_resampled.head())
 
     elif strategy == "original":
         y_train_resampled = y
@@ -442,11 +440,6 @@ def export_datasets(x_train_, x_test_, y_train_, y_test_, strategy_resampling):
     if isinstance(y_test_, pd.Series):
         y_test_ = y_test_.to_frame()
     y_test_.to_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'), index=False)
-
-    print("Exports: X_train.head(1):", x_train_.head(1))
-    print("Exports: X_test.head(1):", x_test_.head(1))
-    print("Exports: y_train.head(1):", y_train_.head(1))
-    print("Exports: y_test.head(1):", y_test_.head(1))
 
 
 # %%
