@@ -1,3 +1,0 @@
-mlflow-db.cfrwfplpeuzu.eu-north-1.rds.amazonaws.com
-
-mlflow server -h 0.0.0.0 -p 5000 --backend-store-uri postgresql://rvaillant_aws:Mlflow_Scorecredit@mlflow-db.cfrwfplpeuzu.eu-north-1.rds.amazonaws.com:5432/mlflow-db --default-artifact-root s3://mlflow-artifacts-creditclassification
