@@ -52,17 +52,21 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     '''Import principal dataset 'application_train.csv and applies first cleaning operations
     '''
     if application_test_data:
+        print('In get_applciation_data/1a')
         df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows)
     else:
+        print('In get_applciation_data/1b')
         df = pd.read_csv(os.path.join("Dataset", "application_train.csv"), nrows=num_rows)
     df = df[df['CODE_GENDER'] != 'XNA']
 
+    print('In get_applciation_data/2')
     # Categorical features with Binary encode (0 or 1; two categories)
     for bin_feature in ['CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY']:
         df[bin_feature], _ = pd.factorize(df[bin_feature])
     # Categorical features with One-Hot encode
     df, _ = one_hot_encoder(df, nan_as_category)
 
+    print('In get_applciation_data/3')
     # NaN values for DAYS_EMPLOYED: 365.243 -> nan
     df['DAYS_EMPLOYED'].replace(365243, np.nan, inplace=True)
     # Some simple new features (percentages)
@@ -71,7 +75,9 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS']
     df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL']
     df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT']
+    print('In get_applciation_data/4')
     gc.collect()
+    print('In get_applciation_data/5')
     return df
 
 
@@ -277,12 +283,12 @@ def data_preparation(main_dataset_only=True, debug=False, new_data=False):
     if new_data:
         print('In Data_prep.data_preparation/2')
         y_train_ = pd.DataFrame(np.zeros((data.shape[0], 2)), columns=['SK_ID_CURR', 'TARGET'])
-        print('In Data_prep.data_preparation/3')
     else:
+        print('In Data_prep.data_preparation/3')
         y_train_ = data[['SK_ID_CURR', 'TARGET']].copy()
         data.drop(columns=['TARGET'], inplace=True)
-    
-    print('In Data_prep.data_preparation/3')
+
+    print('In Data_prep.data_preparation/4')
     if not main_dataset_only:
         with timer("Process bureau and bureau_balance"):
             bureau = bureau_and_balance(num_rows)
@@ -320,7 +326,7 @@ def data_preparation(main_dataset_only=True, debug=False, new_data=False):
             del cc
             gc.collect()
 
-    print('In Data_prep.data_preparation/4')
+    print('In Data_prep.data_preparation/5')
     x_train_, x_test_, y_train_, y_test_ = train_test_split(data, y_train_, test_size=.25, random_state=10)
 
     return x_train_, x_test_, y_train_, y_test_
