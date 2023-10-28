@@ -53,7 +53,7 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     '''
     if application_test_data:
         print('In get_application_data/1a')
-        df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows, quoting=3)
+        df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows, quoting=3, on_bad_lines='skip')
         print('In get_application_data/1b')
     else:
         print('In get_application_data/1c')
