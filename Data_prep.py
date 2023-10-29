@@ -8,6 +8,7 @@ import time
 import warnings
 
 # Data manipulation
+from pickle import dump
 import numpy as np
 import pandas as pd
 
@@ -16,7 +17,6 @@ from imblearn.over_sampling import SMOTE
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectKBest, f_classif
-from pickle import dump
 
 # %% Settings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -24,6 +24,7 @@ pd.options.display.max_rows = 500
 pd.options.display.max_columns = 500
 FEATURE_SELECTION = None  # None or integer
 STRATEGY_RESAMPLING = "undersampled"  # undersampled, original, SMOTE
+MAIN_DATASET_ONLY = False
 
 
 # %% Définitions de fonctions
@@ -52,24 +53,17 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     '''Import principal dataset 'application_train.csv and applies first cleaning operations
     '''
     if application_test_data:
-        print('In get_application_data/1a')
         df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=10, sep=",")
         # df = pd.read_csv(os.path.join("Dataset", "application_test.csv"), nrows=num_rows)
-        print('In get_application_data/1b')
     else:
-        print('In get_application_data/1c')
         df = pd.read_csv(os.path.join("Dataset", "application_train.csv"), nrows=num_rows)
     df = df[df['CODE_GENDER'] != 'XNA']
-    print("df.head(2)")
-    print(df.head(2))
-    print('In get_application_data/2')
     # Categorical features with Binary encode (0 or 1; two categories)
     for bin_feature in ['CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY']:
         df[bin_feature], _ = pd.factorize(df[bin_feature])
     # Categorical features with One-Hot encode
     df, _ = one_hot_encoder(df, nan_as_category)
 
-    print('In get_application_data/3')
     # NaN values for DAYS_EMPLOYED: 365.243 -> nan
     df['DAYS_EMPLOYED'].replace(365243, np.nan, inplace=True)
     # Some simple new features (percentages)
@@ -78,9 +72,7 @@ def get_application_data(num_rows=None, nan_as_category=False, application_test_
     df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS']
     df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL']
     df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT']
-    print('In get_application_data/4')
     gc.collect()
-    print('In get_application_data/5')
     return df
 
 
@@ -280,56 +272,50 @@ def data_preparation(main_dataset_only=True, debug=False, new_data=False):
     '''Process datasets into actionnable train and test sets.
     '''
     num_rows = 10000 if debug else None
-    print('In Data_prep.data_preparation/1')
 
     data = get_application_data(num_rows, application_test_data=new_data)
     if new_data:
-        print('In Data_prep.data_preparation/2')
         y_train_ = pd.DataFrame(np.zeros((data.shape[0], 2)), columns=['SK_ID_CURR', 'TARGET'])
     else:
-        print('In Data_prep.data_preparation/3')
         y_train_ = data[['SK_ID_CURR', 'TARGET']].copy()
         data.drop(columns=['TARGET'], inplace=True)
 
-    print('In Data_prep.data_preparation/4')
     if not main_dataset_only:
         with timer("Process bureau and bureau_balance"):
             bureau = bureau_and_balance(num_rows)
             print("Bureau df shape:", bureau.shape)
-            # df = df.join(bureau, how='left', on='SK_ID_CURR')
             data = data.join(bureau, how='left', on='SK_ID_CURR')
             del bureau
             gc.collect()
         with timer("Process previous_applications"):
             prev = previous_applications(num_rows)
             print("Previous applications df shape:", prev.shape)
-            # df = df.join(prev, how='left', on='SK_ID_CURR')
             data = data.join(prev, how='left', on='SK_ID_CURR')
             del prev
             gc.collect()
         with timer("Process POS-CASH balance"):
             pos = pos_cash(num_rows)
             print("Pos-cash balance df shape:", pos.shape)
-            # df = df.join(pos, how='left', on='SK_ID_CURR')
             data = data.join(pos, how='left', on='SK_ID_CURR')
             del pos
             gc.collect()
         with timer("Process installments payments"):
             ins = installments_payments(num_rows)
             print("Installments payments df shape:", ins.shape)
-            # df = df.join(ins, how='left', on='SK_ID_CURR')
             data = data.join(ins, how='left', on='SK_ID_CURR')
             del ins
             gc.collect()
         with timer("Process credit card balance"):
             cc = credit_card_balance(num_rows)
             print("Credit card balance df shape:", cc.shape)
-            # df = df.join(cc, how='left', on='SK_ID_CURR')
             data = data.join(cc, how='left', on='SK_ID_CURR')
             del cc
             gc.collect()
 
-    print('In Data_prep.data_preparation/5')
+    # Suppression valeurs extrêmes
+    data.replace([np.inf, -np.inf], np.nan, inplace=True)
+    y_train_.replace([np.inf, -np.inf], np.nan, inplace=True)
+
     x_train_, x_test_, y_train_, y_test_ = train_test_split(data, y_train_, test_size=.25, random_state=10)
 
     return x_train_, x_test_, y_train_, y_test_
@@ -354,11 +340,9 @@ def resampling(x, y, strategy="undersampled"):
         - y_train_resampled : DataFrame : y_train after application of a resampling strategy.
     '''
     if isinstance(y, np.ndarray):
-        print("is nd.array")
         y = pd.Series(y)
         y = pd.DataFrame(y)
     if isinstance(y, pd.core.series.Series):
-        print("is pd.Series")
         y = y.to_frame()
     if strategy == "undersampled":
         train = x.set_index('SK_ID_CURR').join(y.set_index("SK_ID_CURR"))
@@ -401,7 +385,6 @@ def resampling(x, y, strategy="undersampled"):
         print("In resampling.oversampled, NA sur x_train_resampled:", x_train_resampled.isna().sum().sum())
 
     elif strategy == "SMOTE":
-        print("In SMOTE, x.columns:", x.columns)
         smote = SMOTE(sampling_strategy=.7)
         y.drop(columns=['SK_ID_CURR'], inplace=True)
         x_train_resampled, y_train_resampled = smote.fit_resample(x, y)
@@ -410,7 +393,6 @@ def resampling(x, y, strategy="undersampled"):
     elif strategy == "original":
         y_train_resampled = y
         x_train_resampled = x
-        print("In resampling.original, x_train_resampled.shape:", x_train_resampled.shape)
     return x_train_resampled, y_train_resampled
 
 
@@ -424,7 +406,8 @@ def save_columns_to_file(filepath, list_cols):
     '''
     with open(filepath, 'w') as fp:
         for col in list_cols:
-            fp.write("%s\n" % col)
+            # fp.write("%s\n" % col)
+            fp.write(f"{col}\n")
 
 
 # Export des dataset nettoyés
@@ -452,30 +435,23 @@ def export_datasets(x_train_, x_test_, y_train_, y_test_, strategy_resampling):
     if isinstance(y_test_, pd.Series):
         y_test_ = y_test_.to_frame()
     y_test_.to_parquet(os.path.join('Dataset', 'Data clean', 'y_test.parquet'), index=False)
-    # REPRENDRE ICI cols = x_train_.columns.to_list()
+
     save_columns_to_file('cols.txt', x_train_.columns.to_list())
+
 
 # %%
 if __name__ == "__main__":
     # Récupération des données des différentes bases, séparées en train et test sets.
-    X_train, X_test, y_train, y_test = data_preparation()
+    X_train, X_test, y_train, y_test = data_preparation(main_dataset_only=MAIN_DATASET_ONLY)
     features = list(X_train.columns)
-    # print("Data prep -  X_train.shape:", X_train.shape)
-    # print("Data prep -  X_test.shape:", X_test.shape)
-    # print("Data prep -  y_train.shape:", y_train.shape)
-    # print("Data prep -  y_test.shape:", y_test.shape)
 
     # Imputation de valeurs manquantes
     imputer = SimpleImputer(strategy="most_frequent")
     X_train = imputer.fit_transform(X_train)
     X_train = pd.DataFrame(X_train, columns=features)
-    print("X_test.shape", X_test.shape)
     X_test = imputer.transform(X_test)
-    print("X_test.shape", X_test.shape)
     X_test = pd.DataFrame(X_test, columns=features)
     dump(imputer, open('imputer.pkl', 'wb'))
-
-    print("Imputation -  X_test.shape:", X_test.shape)
 
     # Features selection kbest
     if FEATURE_SELECTION is not None:
@@ -485,7 +461,6 @@ if __name__ == "__main__":
         # print("Feature selection", kbest.get_support())
         # print("Features scores", kbest.scores_)
         selected_features = list(X_train.columns[kbest.get_support()])
-        print("Selected features:", selected_features)
 
         X_train = X_train[selected_features]
         X_test = X_test[selected_features]

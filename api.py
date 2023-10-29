@@ -1,8 +1,7 @@
 # %%
+from pickle import load
 import pandas as pd
 
-from pickle import load
-from pydantic import BaseModel
 
 from fastapi import FastAPI
 
@@ -14,19 +13,11 @@ app = FastAPI()
 MLFLOW_SERVING = "EC2"  # "Local" or "EC2" or "S3"
 
 
-class Score(BaseModel):
-    '''Objet de retour de l'API comprenant différentes informations.
-    '''
-    client: int
-    pass_fail: str
-    score: float
-
-
 # %% Definitions
 
 def read_file_to_list(filepath):
     '''Reads a file and return a list of its items.
-    
+
     --------------
     Parameters:
         - filepath : str : Path to the file to read.
@@ -54,7 +45,7 @@ def get_user_data_scaled(id):
         - else return a string indicating an error raised.
     '''
     print('In get_user_data_scaled/1')
-    x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
+    x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=False, debug=False, new_data=True)
     print('In get_user_data_scaled/1.2')
     # print('x1.head(2):')
     # print(x1.head(2))
@@ -141,14 +132,9 @@ async def scoring(SK_ID_CURR: int):
     print('In /scoring/5')
     print(prediction)
     return {"Client_ID": SK_ID_CURR,
-            "Probabilité": round(max(prediction_proba[0]), 4),
+            # "Probabilité": round(max(prediction_proba[0]), 4),
+            "Probabilité": round(prediction_proba[0][0], 4),
             "Pass": pass_fail}
-
-    '''user_score = Score({"client": SK_ID_CURR,
-                        "pass_fail": pass_fail,
-                        "score": prediction
-                        })
-    return user_score'''
 
 
 # %%

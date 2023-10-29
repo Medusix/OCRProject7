@@ -120,10 +120,8 @@ def mlflow_log_model(model, signature, artifact_path="Artifacts"):
         sk_model=model,
         artifact_path=artifact_path,
         signature=signature,
-        # registered_model_name="sk-learn-logistic-reg-model"
         registered_model_name="Credit_Score"
     )
     print(f"Model saved in run {mlflow.active_run().info.run_uuid}")
-
 
 # %%

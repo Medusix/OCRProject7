@@ -1,11 +1,11 @@
 # %% Imports
 import os
+from pickle import dump
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
-from pickle import dump
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import HalvingRandomSearchCV
@@ -16,13 +16,13 @@ from sklearn.metrics import confusion_matrix
 
 import shap
 
-import Data_prep
-from evidently.report import Report
-from evidently.metric_preset import DataDriftPreset
-
 import mlflow
 from mlflow.models import infer_signature
 from mlflow_tools import mlflow_eval_metrics, mlflow_log_experiment, mlflow_log_model
+
+import Data_prep
+from evidently.report import Report
+from evidently.metric_preset import DataDriftPreset
 
 
 # %% Settings
@@ -30,12 +30,12 @@ shap.initjs()
 pd.options.display.max_rows = 500
 pd.options.display.max_columns = 500
 
-mlflow.set_tracking_uri('ec2-13-49-44-23.eu-north-1.compute.amazonaws.com')
+# mlflow.set_tracking_uri('http://ec2-13-49-44-23.eu-north-1.compute.amazonaws.com:5000')
 
-METHOD = "Gradient Boosting"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
+METHOD = "Logistic Regression"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
 DATASET = "undersampled"  # "original "ou "undersampled" ou "SMOTE"
 RUN_NAME = METHOD + "_" + DATASET
-FEATURE_IMPORTANCE = False
+FEATURE_IMPORTANCE = True
 LOG_MLFLOW = True
 RUN_EVIDENTLY = False
 
@@ -43,7 +43,7 @@ RUN_EVIDENTLY = False
 # %% Functions
 def cout_metier(y_true, y_pred, fn_to_fp=10):
     '''Fonction de calcul de coût métier, utilisé pour optimiser la recherche RandomSearch.
-        Optimisation en surpondérant par un facteur fn_to_fp le poids d'un Faux Négatif par rapport à un Faux positif. 
+        Optimisation en surpondérant par un facteur fn_to_fp le poids d'un Faux Négatif par rapport à un Faux positif.
     '''
     _, fp, fn, _ = confusion_matrix(y_true, y_pred).ravel()
     cout = (fn * fn_to_fp + fp * 1)/y_pred.shape[0]
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     X_test_scaled = scaler.transform(X_test)
     dump(scaler, open('scaler.pkl', 'wb'))
 
-    # Scorer for 
+    # Scorer custom
     custom_scorer = make_scorer(cout_metier, greater_is_better=False)
 
     if METHOD == "Logistic Regression":
@@ -107,7 +107,9 @@ if __name__ == '__main__':
             # HalvingRandomSearchCV
             log_reg = LogisticRegression()
 
-            params_lr = {"C": np.logspace(0.1, 2, 4)}
+            params_lr = {
+                "C": np.logspace(0.1, 2, 4),
+                "solver": ['newton-cg', 'newton-cholesky', 'sag']}
 
             halving_grid_lr = HalvingRandomSearchCV(estimator=log_reg,
                                                     param_distributions=params_lr,
@@ -218,10 +220,20 @@ if __name__ == '__main__':
         if METHOD == "Logistic Regression":
             # explainer = shap.Explainer(model, X_test)
             # shap_values = explainer(X_test)
-            explainer = shap.Explainer(model, X_train_scaled)
+            explainer = shap.Explainer(model, X_train_scaled, feature_names=features)
             shap_values = explainer(X_train_scaled)
 
+            # Global feature importance
+            plt.figure()
+            plt.title('Global feature importance')
             shap.plots.beeswarm(shap_values)
+
+            # Local feature importance
+            for user in range(0, 10):
+                plt.figure()
+                plt.title(f'Local feature importance - Prediction {user}')
+                shap.plots.bar(shap_values=shap_values[user], max_display=10)
+
         elif METHOD in ("Random Forest", "Gradient Boosting"):
             explainer = shap.TreeExplainer(model)
             explainer.expected_value = explainer.expected_value[0]
@@ -255,4 +267,4 @@ if __name__ == '__main__':
 
         data_drift_report.save_html("data_drift.html")
 
-# %%
+# %% Analyse SHAP
