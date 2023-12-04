@@ -2,12 +2,14 @@
 from pickle import load
 import pandas as pd
 
-
 from fastapi import FastAPI
 
 import mlflow
 import mlflow.sklearn
+
+import shap
 import Data_prep
+
 
 app = FastAPI()
 MLFLOW_SERVING = "EC2"  # "Local" or "EC2" or "S3"
@@ -44,57 +46,38 @@ def get_user_data_scaled(id):
         - 0 if the user is not found.
         - else return a string indicating an error raised.
     '''
-    print('In get_user_data_scaled/1')
-    x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=False, debug=False, new_data=True)
-    print('In get_user_data_scaled/1.2')
-    # print('x1.head(2):')
-    # print(x1.head(2))
-    # print('x2.head(2):')
-    # print(x2.head(2))
+    x1, x2, _, _ = Data_prep.data_preparation(main_dataset_only=True, debug=False, new_data=True)
+
     new_data = pd.concat([x1, x2], axis=0)
-    # print("new_data.head():")
-    # print(new_data.head())
+
     new_data.set_index(keys=['SK_ID_CURR'], drop=False, inplace=True)
-    print('In get_user_data_scaled/2')
     try:
         if id in new_data.index:
-            print('In get_user_data_scaled/3')
             # Récupération des données du client
             user_data = new_data.query('SK_ID_CURR == @id')
-            print('In get_user_data_scaled/4')
 
             imputer = load(open('imputer.pkl', 'rb'))
-            print('In get_user_data_scaled/5')
 
             # suppression des nouvelles features
             cols = read_file_to_list('cols.txt')
             x_train = pd.DataFrame(columns=cols)
-            # x_train, _, _, _ = Data_prep.data_preparation()
             user_data, _ = user_data.align(x_train, join="right", axis=1)
-            # user_data = user_data[user_data.columns.intersection(cols)]
-            print('In get_user_data_scaled/4')
 
             user_data = imputer.transform(user_data)
-            # user_data = pd.DataFrame(user_data, columns=x_train.columns)
             user_data = pd.DataFrame(user_data, columns=cols)
-            print('In get_user_data_scaled/5')
 
             # Scaling des données pour le modèle
             scaler = load(open('scaler.pkl', 'rb'))
-            print('In get_user_data_scaled/6')
             x_new_scaled = scaler.transform(user_data.drop(columns='SK_ID_CURR'))
-            # x_new_scaled = pd.DataFrame(x_new_scaled, columns=x_train.drop(columns='SK_ID_CURR').columns)
             cols.remove('SK_ID_CURR')
             x_new_scaled = pd.DataFrame(x_new_scaled, columns=cols)
 
-            print('In get_user_data_scaled/7')
-            return x_new_scaled
+            return x_new_scaled, user_data
         else:
-            print('In get_user_data_scaled/8')
             raise ValueError(f"id SK_ID_CURR {id} non reconnu")
     except ValueError as ve:
         print('In get_user_data_scaled/9')
-        return f'ValueError while collecting data. {ve}'
+        return f'ValueError while collecting data: {ve}'
 
 
 # %% Instanciation du modèle
@@ -118,23 +101,52 @@ async def hello():
 async def scoring(SK_ID_CURR: int):
     '''Prédit le score d'un client sur la base de son id SK_ID_CURR
     '''
-    print('In /scoring/1')
-    user_data_scaled = get_user_data_scaled(SK_ID_CURR)
-    print('In /scoring/2')
+    user_data_scaled, user_data_unscaled = get_user_data_scaled(SK_ID_CURR)
     prediction_proba = model.predict_proba(user_data_scaled)
-    print('In /scoring/3')
-    prediction = model.predict(user_data_scaled)
-    print('In /scoring/4')
-    if prediction < .5:
+    # prediction = model.predict(user_data_scaled)
+
+    features_name = user_data_scaled.columns
+    explainer = shap.Explainer(model, user_data_scaled, feature_names=features_name)
+    shap_values = explainer(user_data_scaled)
+
+    # Local feature importance
+    # print(shap_values[0].base_values)
+    dict_shap = {'base_value': shap_values[0].base_values}
+    NB_VALUES = 10
+    df_shap = pd.DataFrame(shap_values[0].data)
+    df_shap.index = features_name
+    df_shap.columns = ['values']
+    df_shap['abs'] = abs(df_shap['values'])
+    df_shap.sort_values(by=['abs'], ascending=False, inplace=True)
+    df_shap = df_shap.head(NB_VALUES)
+    print("df_shap.index:", df_shap.index)
+    # print("user_data_unscaled:", user_data_unscaled)
+    df_true_value = user_data_unscaled.drop(columns=[col for col in user_data_scaled if col not in df_shap.index])
+    df_true_value = df_true_value.T
+    df_true_value.columns = ['true_values']
+    df_true_value['feature'] = df_true_value.index
+    print("df_true_value:", df_true_value)
+
+    df_shap['feature'] = df_shap.index
+    dict_series = df_shap.to_dict('series')
+    dict_values = dict(zip(dict_series['feature'], dict_series['values']))
+    dict_shap['values'] = dict_values
+    print("df_shap:", df_shap)
+    print("dict_shap:", dict_shap)
+
+    dict_series = df_true_value.to_dict('series')
+    dict_true_values = dict(zip(dict_series['feature'], dict_series['true_values']))
+    dict_shap['true_values'] = dict_true_values
+
+    if prediction_proba[0][0] > .5:
         pass_fail = 'pass'
     else:
         pass_fail = "fail"
-    print('In /scoring/5')
-    print(prediction)
     return {"Client_ID": SK_ID_CURR,
             # "Probabilité": round(max(prediction_proba[0]), 4),
             "Probabilité": round(prediction_proba[0][0], 4),
-            "Pass": pass_fail}
+            "Pass": pass_fail,
+            "shap": dict_shap}
 
 
 # %%

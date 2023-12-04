@@ -35,7 +35,7 @@ pd.options.display.max_columns = 500
 METHOD = "Logistic Regression"  # "Logistic Regression" or "Random Forest" or "Gradient Boosting"
 DATASET = "undersampled"  # "original "ou "undersampled" ou "SMOTE"
 RUN_NAME = METHOD + "_" + DATASET
-FEATURE_IMPORTANCE = True
+FEATURE_IMPORTANCE = False
 LOG_MLFLOW = True
 RUN_EVIDENTLY = False
 
@@ -265,6 +265,6 @@ if __name__ == '__main__':
         data_drift_report = Report(metrics=[DataDriftPreset(),])
         data_drift_report.run(current_data=new_data, reference_data=X_train, column_mapping=None)
 
-        data_drift_report.save_html("data_drift.html")
+        data_drift_report.save_html("data_drift2.html")
 
 # %% Analyse SHAP

@@ -39,9 +39,9 @@ if __name__ == '__main__':
         shap_values = explainer(X_train_scaled)
 
         shap.plots.beeswarm(shap_values)
-        
+
         for user in range(0,10):
-            shap.force_plot(base_value = explainer.expected_value, shap_values = shap_values.values[user])
+            shap.force_plot(base_value=explainer.expected_value, shap_values=shap_values.values[user])
 
     if isinstance(model, RandomForestClassifier) or isinstance(model, GradientBoostingClassifier):
         explainer = shap.TreeExplainer(model)

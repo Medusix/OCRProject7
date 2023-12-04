@@ -29,3 +29,12 @@ Trois autres dossiers sont présents:
 - .github/workflows: contient le fichier blank.yml gérant le build github actions.
 - mlruns: contient les runs mlrun locaux.
 - Dataset: les données du projets.
+
+
+UTILISATION DE L'API:
+L'API retourne, pour un client donné, la probabilité de remboursement en temps de son crédit.
+L'API est disponible sur http://http://13.49.44.23:5001/
+La prédiction d'un client se fait avec son id SK_ID_CURR comme suit:
+http://13.49.44.23:5001/scoring/SK_ID_CURR
+exemple 1: http://13.49.44.23:5001/scoring/100001
+exemple 2: http://13.49.44.23:5001/scoring/100005

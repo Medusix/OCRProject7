@@ -4,7 +4,7 @@ entry_point_name: ''
 experiment_id: '789863831438547179'
 lifecycle_stage: active
 run_id: 03490f82d8e7463c922ff4202ad72abb
-run_name: Gradient Boosting_SMOTE
+run_name: Gradient Boosting_Original
 run_uuid: 03490f82d8e7463c922ff4202ad72abb
 source_name: ''
 source_type: 4

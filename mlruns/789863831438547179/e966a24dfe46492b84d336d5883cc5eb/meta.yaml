@@ -4,7 +4,7 @@ entry_point_name: ''
 experiment_id: '789863831438547179'
 lifecycle_stage: active
 run_id: e966a24dfe46492b84d336d5883cc5eb
-run_name: Random Forest_SMOTE
+run_name: Random Forest_Original
 run_uuid: e966a24dfe46492b84d336d5883cc5eb
 source_name: ''
 source_type: 4
